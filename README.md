@@ -60,7 +60,7 @@ Free signing routes, their requirements, and the current setup status are docume
 
 ### Code signing policy
 
-We are preparing an application for free SignPath Foundation signing. No acceptance or certificate has been issued; current Windows builds remain unsigned. See the [code signing policy](CODE_SIGNING.md) and [privacy policy](PRIVACY.md).
+The application for free SignPath Foundation signing was submitted on 10 October 2026 and is awaiting review. No acceptance or certificate has been issued; current Windows builds remain unsigned. See the [code signing policy](CODE_SIGNING.md) and [privacy policy](PRIVACY.md).
 
 The source builds locally, but the current development PC has Smart App Control enabled and blocked `OpenDisplay.Host.dll` as unsigned (Code Integrity events 3033/3077). No installed Windows code-signing identity was found. Earlier screenshots and 20 checks completed before this block; later live fitting attempts did not run.
 

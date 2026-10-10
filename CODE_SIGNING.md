@@ -1,6 +1,6 @@
 # Code signing policy
 
-OpenDisplay is preparing an application to the SignPath Foundation's free open-source signing program. It has not been accepted and its current Windows development release is unsigned. Do not treat the prepared workflow as evidence of an existing certificate or completed signing.
+OpenDisplay submitted an application to the SignPath Foundation's free open-source signing program on 10 October 2026. The form confirmed receipt; provider review is pending. The project has not been accepted and its current Windows development release is unsigned. Do not treat the prepared workflow as evidence of an existing certificate or completed signing.
 
 The project maintainer, reviewer and proposed release-signing approver is [Goosekwt](https://github.com/Goosekwt). Changes from outside contributors require maintainer review. Release-signing requests require explicit maintainer approval, with multi-factor authentication on both GitHub and SignPath accounts.
 

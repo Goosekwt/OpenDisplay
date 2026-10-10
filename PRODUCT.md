@@ -21,7 +21,7 @@ The user usually connects a cable, opens the iPad app, and expects the session t
 Required: real extra display, USB and Wi-Fi, remembered pairing, reconnect on foregrounding, automatic display selection and sizing to the iPad, and temporary arrows on BOTH displays indicating their relative arrangement at connection. Normal use should require no display settings; optional controls belong under Advanced. The arrows are location indicators, not a controls drawer. The connected device reports iPad17,1 and iPadOS 26.6.1. Performance targets must not be represented as measured results.
 
 ## Brand Commitments
-Working name OpenDisplay (implementation assumption). User wants familiar Duet-like behavior; native platform controls suit the task. No custom brand requested.
+Working name OpenDisplay (implementation assumption). User wants familiar Duet-like behavior; native platform controls suit the task. The user explicitly requested a polished original app icon from Claude Code: two adjoining screens with one window spanning both, in cobalt blue. Keep branding focused on the app icon and preserve native controls.
 
 ## Evidence on Hand
 Windows has Duet's signed UMDF/IddCx display driver and Apple Devices installed. Read-only inspection is authorized. The open-source implementation will be authored independently; proprietary binaries are not project dependencies.

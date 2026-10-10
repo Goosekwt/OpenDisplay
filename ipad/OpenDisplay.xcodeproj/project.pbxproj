@@ -12,6 +12,7 @@
 		05C6FF4AE49099A92A6D50A0 /* PeerConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 953FB46B5FF5224014F7C831 /* PeerConnection.swift */; };
 		07E48C3E2FABAE951F0AD012 /* VideoSurfaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892DD3B31754A6A3D4D34051 /* VideoSurfaceView.swift */; };
 		08105381D56D0E1DAF841949 /* Handshake.swift in Sources */ = {isa = PBXBuildFile; fileRef = 765923D3C79A95E35D2AE4D1 /* Handshake.swift */; };
+		17177D6DC58A623A4294B912 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 27091EAC454C9D922551109B /* Assets.xcassets */; };
 		22ADDD20FE0A5B7AAB075B47 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB033C67FCBC65F9B55BD6F3 /* RootView.swift */; };
 		254EEAEE801943623316CF07 /* SessionLoopbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC5AEB61494163ED945C0092 /* SessionLoopbackTests.swift */; };
 		27569295F29D1808A1C79819 /* ScannerScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30C73CB5A4485B0FC258AD6 /* ScannerScreen.swift */; };
@@ -52,6 +53,7 @@
 /* Begin PBXFileReference section */
 		15E9C558B1309FE201035D14 /* TestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSupport.swift; sourceTree = "<group>"; };
 		1F63F0FAAB35F9CCF21FCFA8 /* AnnexBParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnexBParser.swift; sourceTree = "<group>"; };
+		27091EAC454C9D922551109B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2965EF5D26F8B047EC219E1C /* Base64URL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Base64URL.swift; sourceTree = "<group>"; };
 		35DF6FF46F0CF6C56E62B1BE /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		385F797EB0330F31ADA72676 /* AccessUnitAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessUnitAssembler.swift; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 		CB3046AB3ACAEBA958B63E20 /* OpenDisplay */ = {
 			isa = PBXGroup;
 			children = (
+				27091EAC454C9D922551109B /* Assets.xcassets */,
 				E5E79D8629D390C59205A04C /* Info.plist */,
 				A4AA5FCBDF55051854837B0F /* App */,
 				00D58DD934F874839551F6C8 /* Network */,
@@ -205,6 +208,7 @@
 			buildConfigurationList = 70A29610C2F2BFC7229DFEA5 /* Build configuration list for PBXNativeTarget "OpenDisplay" */;
 			buildPhases = (
 				6A85F5CD7A16F3D14112F40F /* Sources */,
+				7983CF5BE5719B1570E6A71D /* Resources */,
 			);
 			buildRules = (
 			);
@@ -265,6 +269,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7983CF5BE5719B1570E6A71D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17177D6DC58A623A4294B912 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6A85F5CD7A16F3D14112F40F /* Sources */ = {
@@ -398,7 +413,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -492,7 +507,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;

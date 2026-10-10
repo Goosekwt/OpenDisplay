@@ -45,6 +45,7 @@ struct StatusPanel: View {
                 Label("Pair with Your PC", systemImage: "qrcode.viewfinder")
             } description: {
                 Text("You only need to pair once. Open OpenDisplay on your PC, then scan its QR code or enter the pairing key. After that, OpenDisplay connects by itself and matches this iPad's screen.")
+                    .foregroundStyle(Color(.label))
                     .frame(maxWidth: 480)
             } actions: {
                 Button("Scan Pairing Code", action: scan)
