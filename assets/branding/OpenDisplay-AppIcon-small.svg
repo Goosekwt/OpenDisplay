@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>OpenDisplay app icon, 16–24 px variant</title>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2D6BF4"/>
+      <stop offset="1" stop-color="#1535B4"/>
+    </linearGradient>
+    <clipPath id="screens">
+      <rect x="72" y="290" width="538" height="444" rx="64"/>
+      <rect x="690" y="290" width="262" height="444" rx="72"/>
+    </clipPath>
+    <clipPath id="window"><rect x="300" y="420" width="560" height="184" rx="40"/></clipPath>
+    <clipPath id="tile"><rect width="1024" height="1024" rx="225.28"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="1024" height="1024" fill="url(#background)"/>
+    <g id="displays" fill="#FFFFFF">
+      <rect x="72" y="290" width="538" height="444" rx="64" id="pc"/>
+      <rect x="690" y="290" width="262" height="444" rx="72" id="ipad"/>
+    </g>
+    <g id="spanning-window" clip-path="url(#screens)">
+      <rect x="300" y="420" width="560" height="184" rx="40" fill="#2F86FF"/>
+    </g>
+  </g>
+</svg>

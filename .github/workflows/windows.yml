@@ -1,0 +1,100 @@
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      request_signing:
+        description: 'Request signing after SignPath onboarding is complete'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Check core behavior
+        run: dotnet run --project windows/OpenDisplay.Tests/OpenDisplay.Tests.csproj -c Release
+      - name: Publish separate components for signing
+        shell: pwsh
+        run: |
+          dotnet publish windows/OpenDisplay.Host/OpenDisplay.Host.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:ContinuousIntegrationBuild=true -o dist/windows --nologo
+          if ($LASTEXITCODE -ne 0) { throw 'Windows publish failed.' }
+          Copy-Item LICENSE dist/windows/LICENSE.txt
+          Copy-Item README.md dist/windows/README.md
+          New-Item -ItemType Directory dist/windows/notices -Force | Out-Null
+          $packages = Join-Path $env:USERPROFILE '.nuget/packages'
+          foreach ($package in @('microsoft.netcore.app.runtime.win-x64', 'microsoft.windowsdesktop.app.runtime.win-x64')) {
+            $packageRoot = Join-Path $packages $package
+            foreach ($notice in Get-ChildItem $packageRoot -Recurse -File | Where-Object Name -Match '^(LICENSE|THIRD-PARTY-NOTICES)') {
+              Copy-Item $notice.FullName (Join-Path 'dist/windows/notices' ($package + '-' + $notice.Name))
+            }
+          }
+          Copy-Item assets/notices/QRCoder-LICENSE.txt dist/windows/notices/QRCoder-LICENSE.txt
+          Get-ChildItem dist/windows -File | Where-Object Extension -In '.exe', '.dll' | ForEach-Object {
+            $signature = Get-AuthenticodeSignature -LiteralPath $_.FullName
+            [pscustomobject]@{File=$_.Name; Signature=$signature.Status.ToString(); SHA256=(Get-FileHash $_.FullName -Algorithm SHA256).Hash}
+          } | ConvertTo-Json | Set-Content dist/windows/signature-inventory.json
+      - name: Upload unsigned development build
+        id: unsigned
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: OpenDisplay-windows-x64-unsigned
+          path: dist/windows/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Check signing configuration
+        if: github.event_name == 'workflow_dispatch' && inputs.request_signing
+        shell: pwsh
+        env:
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_POLICY_SLUG: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          SIGNPATH_ARTIFACT_CONFIGURATION_SLUG: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        run: |
+          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Signing is limited to the main branch.' }
+          foreach ($name in @('SIGNPATH_ORGANIZATION_ID','SIGNPATH_PROJECT_SLUG','SIGNPATH_POLICY_SLUG','SIGNPATH_ARTIFACT_CONFIGURATION_SLUG','SIGNPATH_API_TOKEN')) {
+            if (-not [Environment]::GetEnvironmentVariable($name)) { throw "Missing configuration: $name. Complete SignPath onboarding first." }
+          }
+      - name: Submit for SignPath approval
+        if: github.event_name == 'workflow_dispatch' && inputs.request_signing
+        uses: SignPath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: dist/signed
+      - name: Verify project signatures
+        if: github.event_name == 'workflow_dispatch' && inputs.request_signing
+        shell: pwsh
+        run: |
+          foreach ($name in @('OpenDisplay.Host.exe','OpenDisplay.Host.dll','OpenDisplay.Core.dll')) {
+            $path = Join-Path 'dist/signed' $name
+            if ((Get-AuthenticodeSignature -LiteralPath $path).Status -ne 'Valid') { throw "Invalid or missing signature: $name" }
+          }
+      - name: Upload signed build
+        if: github.event_name == 'workflow_dispatch' && inputs.request_signing
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: OpenDisplay-windows-x64-signed
+          path: dist/signed/
+          if-no-files-found: error

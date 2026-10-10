@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>OpenDisplay app icon</title>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2D6BF4"/>
+      <stop offset="1" stop-color="#1535B4"/>
+    </linearGradient>
+    <clipPath id="screens">
+      <rect x="100" y="308" width="556" height="384" rx="32"/>
+      <rect x="688" y="376" width="236" height="316" rx="52"/>
+    </clipPath>
+    <clipPath id="window"><rect x="286" y="434" width="586" height="204" rx="28"/></clipPath>
+    <filter id="soft" x="-20%" y="-30%" width="140%" height="170%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+    <filter id="lift" x="-10%" y="-20%" width="120%" height="150%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+  <g>
+    <rect width="1024" height="1024" fill="url(#background)"/>
+    <g id="shadow" fill="#0B1E66" opacity="0.34" filter="url(#soft)" transform="translate(0 16)">
+      <rect x="100" y="308" width="556" height="384" rx="32"/>
+      <rect x="688" y="376" width="236" height="316" rx="52"/>
+    </g>
+    <g id="displays" fill="#FFFFFF">
+      <rect x="100" y="308" width="556" height="384" rx="32" id="pc"/>
+      <rect x="688" y="376" width="236" height="316" rx="52" id="ipad"/>
+    </g>
+    <g id="spanning-window" clip-path="url(#screens)">
+      <g fill="#0B1E66" opacity="0.16" filter="url(#lift)" transform="translate(0 6)"><rect x="286" y="434" width="586" height="204" rx="28"/></g>
+      <rect x="286" y="434" width="586" height="204" rx="28" fill="#2F86FF"/>
+      <rect x="286" y="434" width="586" height="52" fill="#1A5FE0" clip-path="url(#window)"/>
+    </g>
+  </g>
+</svg>

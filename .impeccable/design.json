@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-10T18:57:15.837Z",
+  "title": "Design System: OpenDisplay",
+  "extensions": {
+    "colorMeta": {
+      "windows-surface": {
+        "role": "neutral",
+        "displayName": "Windows Light Surface",
+        "tonalRamp": [
+          "oklch(15.0% 0.0029 264.5)",
+          "oklch(26.4% 0.0029 264.5)",
+          "oklch(37.9% 0.0029 264.5)",
+          "oklch(49.3% 0.0029 264.5)",
+          "oklch(60.7% 0.0029 264.5)",
+          "oklch(72.1% 0.0029 264.5)",
+          "oklch(83.6% 0.0029 264.5)",
+          "oklch(95.0% 0.0029 264.5)"
+        ]
+      },
+      "windows-status": {
+        "role": "primary",
+        "displayName": "Windows Status Blue",
+        "tonalRamp": [
+          "oklch(15.0% 0.1060 256.0)",
+          "oklch(26.4% 0.1060 256.0)",
+          "oklch(37.9% 0.1060 256.0)",
+          "oklch(49.3% 0.1060 256.0)",
+          "oklch(60.7% 0.1060 256.0)",
+          "oklch(72.1% 0.1060 256.0)",
+          "oklch(83.6% 0.1060 256.0)",
+          "oklch(95.0% 0.1060 256.0)"
+        ]
+      },
+      "windows-link": {
+        "role": "primary",
+        "displayName": "Windows Link Blue",
+        "tonalRamp": [
+          "oklch(15.0% 0.1566 259.3)",
+          "oklch(26.4% 0.1566 259.3)",
+          "oklch(37.9% 0.1566 259.3)",
+          "oklch(49.3% 0.1566 259.3)",
+          "oklch(60.7% 0.1566 259.3)",
+          "oklch(72.1% 0.1566 259.3)",
+          "oklch(83.6% 0.1566 259.3)",
+          "oklch(95.0% 0.1566 259.3)"
+        ]
+      },
+      "windows-arrow": {
+        "role": "primary",
+        "displayName": "Windows Direction Blue",
+        "tonalRamp": [
+          "oklch(15.0% 0.1998 260.7)",
+          "oklch(26.4% 0.1998 260.7)",
+          "oklch(37.9% 0.1998 260.7)",
+          "oklch(49.3% 0.1998 260.7)",
+          "oklch(60.7% 0.1998 260.7)",
+          "oklch(72.1% 0.1998 260.7)",
+          "oklch(83.6% 0.1998 260.7)",
+          "oklch(95.0% 0.1998 260.7)"
+        ]
+      },
+      "windows-secondary-text": {
+        "role": "neutral",
+        "displayName": "Windows Secondary Text",
+        "tonalRamp": [
+          "oklch(15.0% 0.0000 0)",
+          "oklch(26.4% 0.0000 0)",
+          "oklch(37.9% 0.0000 0)",
+          "oklch(49.3% 0.0000 0)",
+          "oklch(60.7% 0.0000 0)",
+          "oklch(72.1% 0.0000 0)",
+          "oklch(83.6% 0.0000 0)",
+          "oklch(95.0% 0.0000 0)"
+        ]
+      },
+      "video-background": {
+        "role": "neutral",
+        "displayName": "Video Black",
+        "tonalRamp": [
+          "oklch(15.0% 0.0000 0)",
+          "oklch(26.4% 0.0000 0)",
+          "oklch(37.9% 0.0000 0)",
+          "oklch(49.3% 0.0000 0)",
+          "oklch(60.7% 0.0000 0)",
+          "oklch(72.1% 0.0000 0)",
+          "oklch(83.6% 0.0000 0)",
+          "oklch(95.0% 0.0000 0)"
+        ]
+      },
+      "arrow-foreground": {
+        "role": "neutral",
+        "displayName": "Arrow White",
+        "tonalRamp": [
+          "oklch(15.0% 0.0000 0)",
+          "oklch(26.4% 0.0000 0)",
+          "oklch(37.9% 0.0000 0)",
+          "oklch(49.3% 0.0000 0)",
+          "oklch(60.7% 0.0000 0)",
+          "oklch(72.1% 0.0000 0)",
+          "oklch(83.6% 0.0000 0)",
+          "oklch(95.0% 0.0000 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "windows-headline": {
+        "displayName": "Windows headline",
+        "purpose": "MainForm's single introductory heading."
+      },
+      "windows-body": {
+        "displayName": "Windows body",
+        "purpose": "Default host form type; iPad retains native text styles."
+      },
+      "windows-section-label": {
+        "displayName": "Windows section label",
+        "purpose": "Pairing and Advanced section labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ipad-position-arrow",
+        "value": ".shadow(color: .black.opacity(0.35), radius: 10, y: 3)",
+        "purpose": "Separate the temporary arrow from arbitrary video content."
+      }
+    ],
+    "motion": [
+      {
+        "name": "windows-arrow-lifetime",
+        "value": "3s; final 0.5s opacity fade in 0.1s timer steps",
+        "purpose": "Temporary display-position indication."
+      },
+      {
+        "name": "ipad-overlay-fade",
+        "value": ".easeInOut(duration: 0.2)",
+        "purpose": "Video and connection-control transitions; arrow transition with Reduce Motion."
+      },
+      {
+        "name": "ipad-arrow-entrance",
+        "value": ".spring(duration: 0.35)",
+        "purpose": "Position-arrow entrance without Reduce Motion."
+      },
+      {
+        "name": "ipad-arrow-nudge",
+        "value": "10pt outward; .easeInOut(duration: 0.7).repeatForever(autoreverses: true)",
+        "purpose": "Directional movement; omitted with Reduce Motion."
+      },
+      {
+        "name": "ipad-controls-lifetime",
+        "value": "4s",
+        "purpose": "Hide connection capsule after reveal."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Windows action",
+      "kind": "button",
+      "refersTo": "windows-action",
+      "description": "Browser-native illustration of the standard WinForms action. Native Windows chrome is authoritative.",
+      "html": "<button class=\"ds-win-action\">Start connecting</button><button class=\"ds-win-action\" disabled>Show position arrows</button>",
+      "css": ".ds-win-action { font: 10pt \"Segoe UI\", sans-serif; min-width:160px; min-height:42px; margin-right:6px; } .ds-win-action:hover:enabled { cursor:default; } .ds-win-action:focus-visible { outline:auto; } .ds-win-action:active:enabled { border-style:inset; }"
+    },
+    {
+      "name": "Windows text input",
+      "kind": "input",
+      "description": "Illustrative native text field from Advanced. Platform controls own border and focus appearance.",
+      "html": "<input class=\"ds-win-input\" aria-label=\"Wi-Fi fallback\" placeholder=\"Automatic discovery (or iPad IP address)\">",
+      "css": ".ds-win-input { font:10pt \"Segoe UI\", sans-serif; width:100%; min-height:42px; } .ds-win-input:hover { cursor:text; } .ds-win-input:focus-visible { outline:auto; }"
+    },
+    {
+      "name": "Advanced disclosure link",
+      "kind": "nav",
+      "refersTo": "windows-link",
+      "description": "A plain link reveals the optional settings area; this preview does not simulate the panel.",
+      "html": "<a class=\"ds-win-link\" href=\"#advanced\">Advanced options</a>",
+      "css": ".ds-win-link { font:10pt \"Segoe UI\", sans-serif; color:#1450aa; text-decoration:underline; } .ds-win-link:hover { cursor:pointer; } .ds-win-link:focus-visible { outline:auto; } .ds-win-link:active { color:LinkText; }"
+    },
+    {
+      "name": "Windows position arrow",
+      "kind": "custom",
+      "refersTo": "windows-arrow",
+      "description": "Illustration of the noninteractive edge overlay. The example points right; source rotates it for the actual edge.",
+      "html": "<div class=\"ds-win-arrow\" role=\"img\" aria-label=\"iPad this way, right\"><svg width=\"72\" height=\"58\" viewBox=\"0 0 72 58\" aria-hidden=\"true\"><path d=\"M13 29H57M42 14L58 29L42 44\" fill=\"none\" stroke=\"white\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>iPad this way</span></div>",
+      "css": ".ds-win-arrow { width:152px; height:92px; border-radius:18px; background:#145dd7; color:white; display:flex; flex-direction:column; align-items:center; pointer-events:none; } .ds-win-arrow span { margin-top:4px; font:menu; }"
+    },
+    {
+      "name": "iPad connection capsule",
+      "kind": "custom",
+      "description": "Illustrative translation of SwiftUI regularMaterial and Capsule. Material, symbols, and font metrics remain system-rendered in the app.",
+      "html": "<div class=\"ds-ipad-capsule\"><span>PC · USB</span><button class=\"ds-ipad-menu\" aria-label=\"Connection options\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/><circle cx=\"8\" cy=\"12\" r=\"1\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/><circle cx=\"16\" cy=\"12\" r=\"1\"/></svg></button></div>",
+      "css": ".ds-ipad-capsule { display:inline-flex; align-items:center; gap:12px; padding:10px 16px; border-radius:999px; background:color-mix(in srgb, Canvas 85%, transparent); backdrop-filter:blur(16px); color:CanvasText; font:500 15px system-ui; } .ds-ipad-menu { display:flex; padding:0; border:0; background:transparent; color:LinkText; } .ds-ipad-menu:hover { cursor:pointer; } .ds-ipad-menu:focus-visible { outline:auto; } .ds-ipad-menu:active { opacity:.7; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A familiar native display utility",
+    "overview": "The platform is the visual authority. Windows uses standard WinForms controls on a restrained light surface; iPad uses SwiftUI system views, symbols, forms, sheets, and materials. Familiar Duet-like utility behavior is the user's direction. There is no custom brand system to extend.\n\nKeep the working display clear. Pairing and connection state receive attention while disconnected; video fills the iPad when available. Position arrows are temporary spatial indicators, separate from connection controls.",
+    "keyCharacteristics": [
+      "Familiar platform controls and typography.",
+      "Clear connection state with optional settings disclosed separately.",
+      "Full-screen video with temporary, unobtrusive overlays."
+    ],
+    "rules": [
+      {
+        "name": "The Platform Color Rule",
+        "body": "Fixed Windows colors belong to the host; iPad semantic colors and materials remain platform-resolved.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do use native controls and semantic iPad styling for new surfaces.",
+      "Do preserve the distinction between connection state and pairing feedback.",
+      "Do keep optional connection configuration under Advanced on Windows.",
+      "Do keep position arrows temporary, directional, and separate from menus.",
+      "Do preserve native focus, disabled states, Dynamic Type, and Reduce Motion behavior."
+    ],
+    "donts": [
+      "Don't add custom branding, decorative dashboards, or persistent chrome over the video.",
+      "Don't turn a position arrow into a controls drawer.",
+      "Don't treat source behavior, preview captures, or targets as verified live connection or performance results."
+    ]
+  }
+}
