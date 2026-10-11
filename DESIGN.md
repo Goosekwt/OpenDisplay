@@ -5,7 +5,7 @@ colors:
   windows-surface: "#f7f8fa"
   windows-status: "#1c4880"
   windows-link: "#1450aa"
-  windows-arrow: "#145dd7"
+  windows-arrow: "#007aff"
   windows-secondary-text: "#696969"
   video-background: "#000000"
   arrow-foreground: "#ffffff"
@@ -23,7 +23,7 @@ typography:
     fontSize: "10pt"
     fontWeight: 700
 rounded:
-  windows-arrow: "18px"
+  windows-arrow: "circle"
 spacing:
   compact: "10px"
   control-gap: "12px"
@@ -40,8 +40,8 @@ components:
     backgroundColor: "{colors.windows-arrow}"
     textColor: "{colors.arrow-foreground}"
     rounded: "{rounded.windows-arrow}"
-    width: "152px"
-    height: "92px"
+    width: "96 logical pixels"
+    height: "96 logical pixels"
 ---
 
 # Design System: OpenDisplay
@@ -60,7 +60,7 @@ Keep the working display clear. Pairing and connection state receive attention w
 - Clear connection state with optional settings disclosed separately.
 - Full-screen video with temporary, unobtrusive overlays.
 
-This is a source-derived snapshot dated 2026-10-10. Sources: `windows/OpenDisplay.Host/MainForm.cs`, `EdgeArrow.cs`, and `ipad/OpenDisplay/UI/*.swift` and `App/*.swift`. Windows previews at two sizes, the iPad simulator first-run screen, and the final icon preview were inspected. The Windows build and 20 core checks passed, including on GitHub's Windows runner; UI state simulations were checked. The iPad passed 63 simulator tests and development build 0.1.0 (3) installed on the owner's iPad. Final visual review cleared the instruction contrast and icon preview captions. The unsigned host is blocked by Windows Smart App Control; live connection and automatic sizing remain unverified. Described behavior below is implemented source behavior, not a claim of completed cross-device testing.
+This source-derived snapshot was updated on 2026-10-11 for the Windows position arrow. The owner requested the iPad's circular appearance and smoother motion on Windows. Four Windows arrow artwork previews and a three-second native compositor check passed; final owner acceptance is pending. USB playback and the earlier position-arrow button are owner-confirmed. Native landscape resolution and virtual-display scaling are read back from Windows. The Windows build passes 25 core checks; the installed iPad build previously passed 63 simulator tests. Performance and remaining device checks are recorded in `docs/capture-validation.md`.
 
 ## Colors
 
@@ -74,7 +74,7 @@ Blue communicates links, connection feedback, and display direction; neutral sur
 
 ## Typography
 
-Windows uses the frontmatter's Segoe UI roles: one bold headline, normal body copy, and bold section labels. The Windows arrow caption uses `SystemFonts.MessageBoxFont`.
+Windows uses the frontmatter's Segoe UI roles: one bold headline, normal body copy, and bold section labels. The temporary Windows arrow is now a symbol-only spatial indicator with an accessible direction name.
 
 iPad uses native text styles: body, monospaced body for the pairing key, subheadline with medium weight for connection summary, callout for scanner guidance, footnote for notices, and title3 for control symbols. The edge arrow alone has an explicit system symbol size (44 points, bold). Keep Dynamic Type and system text metrics; do not reproduce Windows headline styling on iPad.
 
@@ -86,11 +86,11 @@ iPad's video ignores safe areas. Disconnected states use centered `ContentUnavai
 
 ## Elevation & Depth
 
-Windows content is flat; native window and control chrome supply their own depth. Do not add card shadows. iPad uses regular material for the connection capsule and scanner hint. Only the iPad position arrow has an explicit shadow: black at 35% opacity, radius 10, vertical offset 3. System sheets and menus keep native elevation.
+Windows content is flat; native window and control chrome supply their own depth. Do not add card shadows. iPad uses regular material for the connection capsule and scanner hint. Both position arrows have a soft black shadow offset downward by three logical units. Windows caches a small alpha surface for animation; the iPad uses a 35%-opacity, radius-10 shadow. System sheets and menus keep native elevation.
 
 ## Shapes
 
-Standard controls keep platform shapes. Windows' custom edge indicator is a rounded rectangle using the frontmatter radius. iPad's edge indicator is a circle (96 × 96 points); connection and scanner overlays are capsules. These overlays are not a general card style.
+Standard controls keep platform shapes. Both edge indicators are circles, 96 × 96 logical units, with a white directional arrow and 24-unit edge inset. Windows measures the destination monitor's scaling independently. iPad connection and scanner overlays are capsules. These overlays are not a general card style.
 
 ## Components
 
@@ -99,7 +99,7 @@ Standard controls keep platform shapes. Windows' custom edge indicator is a roun
 - **Pairing:** A black-and-white QR code with an accessible alternative through Copy pairing key. Copy success or clipboard failure appears beside pairing content without replacing connection status. iPad provides QR scanning, a camera-permission fallback, and a native form for manual entry. Manual errors appear in the form footer.
 - **iPad status:** Native `ContentUnavailableView` distinguishes unpaired, paused, waiting, connected-before-first-frame, and listener failure. Primary recovery/pairing actions use `.borderedProminent`; waiting uses `ProgressView`. A received first frame switches to video.
 - **Connection capsule:** A summary and native menu appear when video begins or the user taps the video, then hide after four seconds. The menu offers local position-arrow replay, Settings, and Disconnect. It is separate from the arrow and is not a controls drawer attached to an edge.
-- **Position arrows:** Windows shows a click-through, nonactivating edge window with a directional arrow and “iPad this way.” It closes after three seconds, fading over the final half-second. iPad shows a system arrow pointing toward the PC; requests govern its lifetime. Its spring entrance lasts 0.35 seconds and it nudges outward by 10 points on a repeating 0.7-second ease-in-out cycle. Reduce Motion removes the nudge and substitutes a 0.2-second opacity transition. iPad announces the direction for accessibility. Root video/control transitions use a 0.2-second ease-in-out fade.
+- **Position arrows:** Windows shows a click-through, nonactivating circular edge window pointing toward the iPad. Its 0.35-second eased entrance, 10-unit outward nudge over a repeating 0.7-second cycle, and 0.2-second exit echo the iPad indicator. The window closes after three wall-clock seconds and repeated requests replace the prior arrow. Windows' client-area animation preference disables movement and leaves a short fade. The iPad keeps its native spring entrance and Reduce Motion behavior, and announces the PC direction for accessibility. Root video/control transitions use a 0.2-second ease-in-out fade.
 - **Settings:** iPad uses a native Form with pairing, connection details, and a destructive Forget This PC confirmation. Windows closes to the notification area; its tray menu provides Open and Quit.
 
 The sidecar's HTML previews are illustrative translations for documentation; its synthesized tonal ramps are preview aids, not implemented palette scales. Native APIs and these source files remain authoritative for system-rendered controls, dynamic colors, focus, and accessibility.

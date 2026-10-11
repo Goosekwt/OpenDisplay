@@ -26,8 +26,10 @@ public sealed class MainForm : Form
     private CancellationTokenSource? stop;
     private Task? running;
     private ConnectionManager? manager;
+    private EdgeArrow? activeArrow;
     private bool exiting, refreshing;
     private long lastBytes;
+    private long lastFrames, lastSampleTime = Environment.TickCount64;
 
     public MainForm(Settings settings, Action<string>? copyText = null)
     {
@@ -82,7 +84,17 @@ public sealed class MainForm : Form
         mirror.Checked = settings.Mirror; wifi.Text = settings.WifiAddress; side.Enabled = mirror.Checked;
         mirror.CheckedChanged += (_, _) => { side.Enabled = mirror.Checked && stop is null; RefreshDisplays(); };
         RefreshDisplays();
-        timer.Tick += (_, _) => { if (manager is null) return; long b = Interlocked.Read(ref manager.BytesSent); statistics.Text = b > 0 ? $"{Math.Max(0, b - lastBytes) * 8 / 1_000_000.0:F1} Mbps sent · local connection" : ""; lastBytes = b; }; timer.Start();
+        timer.Tick += (_, _) =>
+        {
+            if (manager is null) return;
+            long now = Environment.TickCount64, b = Interlocked.Read(ref manager.BytesSent), frames = Interlocked.Read(ref manager.FramesEncoded);
+            double elapsed = (now - lastSampleTime) / 1000.0;
+            if (elapsed < 2) return;
+            statistics.Text = b > 0 && b >= lastBytes && frames >= lastFrames
+                ? $"{(frames - lastFrames) / elapsed:F1} fps encoded · {(b - lastBytes) * 8 / elapsed / 1_000_000.0:F1} Mbps sent" : "";
+            lastBytes = b; lastFrames = frames; lastSampleTime = now;
+            SaveRuntimeStatus();
+        }; timer.Start();
         SystemEvents.DisplaySettingsChanged += DisplaysChanged;
         Shown += async (_, _) => { if (settings.AutoConnect) await StartAsync(); if (Environment.GetCommandLineArgs().Contains("--tray")) Hide(); };
         FormClosing += (_, e) => { if (!exiting) { e.Cancel = true; Hide(); tray.ShowBalloonTip(1800, "OpenDisplay is still running", "Use the tray menu to reopen or quit.", ToolTipIcon.Info); } };
@@ -116,8 +128,9 @@ public sealed class MainForm : Form
         try { VideoSender.FindFfmpeg(settings.FfmpegPath); } catch (Exception e) { status.Text = e.Message; return; }
         settings.DisplayName = source.DeviceName; settings.WifiAddress = wifi.Text.Trim(); settings.Mirror = mirror.Checked; settings.MirrorSide = side.Text; settings.Fps = (int)frameRate.SelectedItem!; settings.AutoConnect = true; settings.Save();
         stop = new(); manager = new(settings, source, key);
-        manager.Status += text => UI(() => { status.Text = text; identify.Enabled = text.StartsWith("Connected"); });
-        manager.Identify += (screen, edge) => UI(() => new EdgeArrow(screen.Bounds, edge).Show());
+        lastBytes = lastFrames = 0; lastSampleTime = Environment.TickCount64;
+        manager.Status += text => UI(() => { status.Text = text; identify.Enabled = text.StartsWith("Connected"); SaveRuntimeStatus(); });
+        manager.Identify += (screen, edge) => UI(() => { activeArrow?.Close(); activeArrow = new EdgeArrow(screen.Bounds, edge); activeArrow.Show(); });
         manager.DeviceConnected += id => UI(() => { settings.LastDeviceId = id; settings.Save(); });
         SetConnectingControls();
         var token = stop.Token;
@@ -125,6 +138,19 @@ public sealed class MainForm : Form
         await Task.CompletedTask;
     }
     private void UI(Action action) { if (!IsDisposed && IsHandleCreated) BeginInvoke(action); }
+    private void SaveRuntimeStatus()
+    {
+        if (!settings.Persist) return;
+        try
+        {
+            // One local snapshot, with no pairing key, device ID or captured content.
+            var snapshot = new { updatedUtc = DateTimeOffset.UtcNow, processId = Environment.ProcessId, status = status.Text, statistics = statistics.Text, encoding = manager?.Encoding.ToString(), framesEncoded = manager is null ? 0 : Interlocked.Read(ref manager.FramesEncoded), bytesSent = manager is null ? 0 : Interlocked.Read(ref manager.BytesSent) };
+            string path = Path.Combine(Settings.Folder, "runtime-status.json");
+            File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(snapshot));
+            File.Move(path + ".tmp", path, true);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
     private void CopyPairingKey()
     {
         try { copyText(SecureChannel.EncodeKey(key)); pairingFeedback.Text = "Copied. Paste into your iPad app."; }
@@ -162,8 +188,10 @@ public sealed class MainForm : Form
     private async Task StopAsync(bool remember = true)
     {
         if (stop is null) return; var cancellation = stop; cancellation.Cancel();
+        activeArrow?.Close(); activeArrow = null;
         if (running is not null) await running; cancellation.Dispose(); stop = null; manager = null; running = null;
         if (remember) { settings.AutoConnect = false; settings.Save(); }
         displays.Enabled = wifi.Enabled = mirror.Enabled = frameRate.Enabled = true; side.Enabled = mirror.Checked; identify.Enabled = false; start.Text = "Start connecting"; status.Text = "Stopped"; statistics.Text = ""; RefreshDisplays();
+        SaveRuntimeStatus();
     }
 }

@@ -2,7 +2,7 @@
 
 OpenDisplay's Windows host is currently unsigned. Smart App Control blocked the development DLL on the owner's PC. The display driver has its own upstream signature; that does not sign the OpenDisplay host. Apple development signing is separate and is already configured for the iPad build.
 
-No Windows security settings have been changed and no signing service has been purchased. The owner selected free SignPath signing and authorized public publication at [Goosekwt/OpenDisplay](https://github.com/Goosekwt/OpenDisplay). Source and an unsigned Windows preview are public. The SignPath application was submitted on 10 October 2026; the form confirmed receipt and provider review is pending.
+The owner subsequently disabled Smart App Control manually for personal development and confirmed USB playback. OpenDisplay and its setup scripts do not change Windows security settings. No signing service has been purchased. The owner selected free SignPath signing and authorized public publication at [Goosekwt/OpenDisplay](https://github.com/Goosekwt/OpenDisplay). Source and an unsigned Windows preview are public. The SignPath application was submitted on 10 October 2026; the form confirmed receipt and provider review is pending.
 
 ## Free options
 

@@ -6,4 +6,6 @@ Pairing information is saved locally using Windows DPAPI and iOS Keychain. The p
 
 OpenDisplay has no advertising, analytics, developer-operated video relay, or user-account service. Display video and pairing keys are not sent to a developer-operated server. Installing prerequisites can contact their download providers; Apple and Windows services operate under their own platform policies.
 
+The Windows host keeps a single replaceable `runtime-status.json` snapshot alongside its settings for local troubleshooting. It records the last connection status/error, selected encoder, encoded-frame and sent-byte counts, process ID, and timestamp. It does not contain pairing keys or display images and is not uploaded automatically.
+
 The source project and its build/release service on GitHub are public. Do not attach real pairing keys, private device identifiers, or sensitive screen captures to public issues.

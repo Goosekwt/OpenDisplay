@@ -6,6 +6,32 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Contains("--scale-check"))
+        {
+            var display = DisplaySource.GetAll().Single(d => d.Virtual && !d.Primary);
+            var before = DisplaySource.GetAll().Select(d => new { d.DeviceName, percent = DisplayScaling.GetPercent(d.DeviceName) }).ToArray();
+            bool changed = DisplayScaling.FitVirtualDisplay(display, int.Parse(args[1]));
+            var after = DisplaySource.GetAll().Select(d => new { d.DeviceName, percent = DisplayScaling.GetPercent(d.DeviceName) }).ToArray();
+            File.WriteAllText(args[2], JsonSerializer.Serialize(new { changed, before, after }));
+            return;
+        }
+        if (args.Contains("--arrow-check"))
+        {
+            using var arrow = new EdgeArrow(DisplaySource.GetAll().First(d => d.Primary).Bounds, "left");
+            Application.Run(arrow);
+            File.WriteAllText(args[1], JsonSerializer.Serialize(new { arrow.PresentedFrames, arrow.PresentationError, arrow.IsDisposed }));
+            return;
+        }
+        if (args.Contains("--arrow-preview"))
+        {
+            string folder = args.ElementAtOrDefault(1) ?? "."; Directory.CreateDirectory(folder);
+            foreach (var edge in new[] { "left", "right", "top", "bottom" })
+            {
+                using var art = EdgeArrow.CreateArtwork(edge, 2);
+                art.Save(Path.Combine(folder, $"arrow-{edge}.png"));
+            }
+            return;
+        }
         if (args.Contains("--fit-check"))
         {
             var source = DisplaySource.GetAll().First(d => d.Virtual);
@@ -31,7 +57,7 @@ internal static class Program
         }
         if (args.Contains("--diagnose"))
         {
-            var result = new { displays = DisplaySource.GetAll(), modes = DisplaySource.GetAll().Where(d => d.Virtual).Select(d => new { d.DeviceName, modes = AutomaticDisplay.GetModes(d.DeviceName) }), ffmpeg = VideoSender.FindFfmpeg("") };
+            var result = new { dpiMode = Application.HighDpiMode.ToString(), displays = DisplaySource.GetAll(), scaling = DisplaySource.GetAll().Select(d => new { d.DeviceName, percent = DisplayScaling.GetPercent(d.DeviceName), currentMode = AutomaticDisplay.GetCurrentMode(d.DeviceName) }), graphicsOutputs = GraphicsOutput.GetAll(), modes = DisplaySource.GetAll().Where(d => d.Virtual).Select(d => new { d.DeviceName, modes = AutomaticDisplay.GetModes(d.DeviceName) }), ffmpeg = VideoSender.FindFfmpeg("") };
             File.WriteAllText(args.ElementAtOrDefault(1) ?? "diagnostics.json", JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true })); return;
         }
         using var mutex = new Mutex(true, "Local\\OpenDisplay.Host", out bool first);

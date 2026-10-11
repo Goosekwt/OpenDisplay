@@ -12,7 +12,8 @@ public sealed class Settings
     public bool AutoConnect { get; set; } = true;
     public bool Mirror { get; set; }
     public string MirrorSide { get; set; } = "right";
-    public int Fps { get; set; } = 30;
+    public int Fps { get; set; } = 60;
+    public int IpadScalePercent { get; set; } = 200;
     public string FfmpegPath { get; set; } = "";
     public string PreferredDevice { get; set; } = "";
     public string LastDeviceId { get; set; } = "";

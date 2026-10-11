@@ -16,7 +16,7 @@ public sealed record DisplaySource(string DeviceName, string Label, Rectangle Bo
             if (d.Name == s.DeviceName) { label = d.Description + " (" + s.DeviceName.Replace("\\\\.\\", "") + ")"; break; }
         }
         bool virtualDisplay = label.Contains("Virtual Display", StringComparison.OrdinalIgnoreCase) || label.Contains("IddSample", StringComparison.OrdinalIgnoreCase);
-        return new DisplaySource(s.DeviceName, label, s.Bounds, s.Primary, virtualDisplay);
+        return new DisplaySource(s.DeviceName, label, AutomaticDisplay.GetCurrentBounds(s.DeviceName), s.Primary, virtualDisplay);
     }).ToList();
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] private struct DisplayDevice
     {

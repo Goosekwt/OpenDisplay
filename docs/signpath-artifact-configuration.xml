@@ -3,13 +3,13 @@
      Upstream libraries retain their upstream signatures or unsigned state. -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
   <zip-file>
-    <pe-file path="OpenDisplay.Host.exe" product-name="OpenDisplay" product-version="0.1.0" file-version="0.1.0.0">
+    <pe-file path="OpenDisplay.Host.exe" product-name="OpenDisplay" product-version="0.1.1" file-version="0.1.1.0">
       <authenticode-sign />
     </pe-file>
-    <pe-file path="OpenDisplay.Host.dll" product-name="OpenDisplay" product-version="0.1.0" file-version="0.1.0.0">
+    <pe-file path="OpenDisplay.Host.dll" product-name="OpenDisplay" product-version="0.1.1" file-version="0.1.1.0">
       <authenticode-sign />
     </pe-file>
-    <pe-file path="OpenDisplay.Core.dll" product-name="OpenDisplay" product-version="0.1.0" file-version="0.1.0.0">
+    <pe-file path="OpenDisplay.Core.dll" product-name="OpenDisplay" product-version="0.1.1" file-version="0.1.1.0">
       <authenticode-sign />
     </pe-file>
   </zip-file>

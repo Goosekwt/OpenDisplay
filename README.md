@@ -2,7 +2,7 @@
 
 A personal, open-source Windows-to-iPad display project. USB first, Wi-Fi fallback, remembered pairing, and temporary position arrows on both screens. Independent implementation; not affiliated with Duet.
 
-**Development build.** The host compiles and 20 checks pass, including automatic mode selection. The iPad app builds and passed 63 simulator tests; a development-signed build installed successfully on the owner's iPad. A real virtual desktop is installed on the development PC. Physical iPad playback and extended-display acceptance testing are still pending. Windows Smart App Control currently blocks the unsigned host build; trusted Windows code signing is required with that policy enabled. Do not interpret a configured frame-rate target as measured performance.
+**Development build.** USB desktop playback and position arrows have been confirmed on a physical iPad. The host passes 25 core checks, including automatic sizing and keeping adjacent displays attached through rotation. The installed iPad build previously passed 63 simulator tests. GPU capture is smoother in owner testing, but sustained 60 fps, Wi-Fi, and physical rotation/reopen acceptance are not yet verified. Windows builds remain unsigned; the owner manually disabled Smart App Control for personal development. The app does not change security settings.
 
 ## Components
 
@@ -14,7 +14,7 @@ A personal, open-source Windows-to-iPad display project. USB first, Wi-Fi fallba
 
 ## Build the Windows host
 
-Install the .NET 10 SDK and an FFmpeg build containing `libx264`. FFmpeg must be on PATH, or set `FfmpegPath` in `%LOCALAPPDATA%\OpenDisplay\settings.json`.
+Install the .NET 10 SDK and an FFmpeg build containing `libx264`. For fast NVIDIA capture, the build also needs `ddagrab` and `h264_nvenc`; AMD hardware encoding uses `h264_amf`. FFmpeg must be on PATH, or set `FfmpegPath` in `%LOCALAPPDATA%\OpenDisplay\settings.json`.
 
 ```powershell
 dotnet build windows/OpenDisplay.Host/OpenDisplay.Host.csproj -c Release
@@ -52,7 +52,9 @@ Mirror mode is an explicit capture test; it does not create extra desktop space.
 
 The iPad must remain foregrounded for display use. Reopening it should restart its receiver. A working Wi-Fi session currently keeps its transport until disconnect/reconnect; seamless mid-session handoff to a newly plugged cable is not claimed.
 
-The iPad reports its video viewport in pixels. The host chooses the closest supported virtual-display shape and size before starting capture; rotation reconnects with the updated size. It preserves the physical main display and places a disconnected virtual-screen layout beside it. Unusual window sizes may use the closest available mode. Hardware verification of automatic resizing is pending.
+The iPad reports its video viewport in pixels. The host chooses the closest supported virtual-display shape and size before capture; rotation reconnects with the updated size. It reads physical pixel coordinates independently of Windows scaling and keeps the shared screen edge attached during resizing. Native 2420 × 1668 landscape sizing is verified on the development iPad. Unusual window sizes may use the closest available mode.
+
+The virtual iPad display defaults to 200% Windows scaling for readable Retina-size text and cursor, while keeping native-resolution video. `IpadScalePercent` in settings can override that default; `0` leaves scaling alone. Automatic scaling uses an undocumented Windows display-configuration interface, so it validates the response and skips the adjustment on unsupported systems. It never adjusts a physical/primary display or a cloned display source. Resolution and scaling are separate.
 
 ## Windows signing
 
@@ -62,16 +64,19 @@ Free signing routes, their requirements, and the current setup status are docume
 
 The application for free SignPath Foundation signing was submitted on 10 October 2026 and is awaiting review. No acceptance or certificate has been issued; current Windows builds remain unsigned. See the [code signing policy](CODE_SIGNING.md) and [privacy policy](PRIVACY.md).
 
-The source builds locally, but the current development PC has Smart App Control enabled and blocked `OpenDisplay.Host.dll` as unsigned (Code Integrity events 3033/3077). No installed Windows code-signing identity was found. Earlier screenshots and 20 checks completed before this block; later live fitting attempts did not run.
+Smart App Control initially blocked `OpenDisplay.Host.dll` as unsigned (Code Integrity events 3033/3077). The owner subsequently turned that policy off manually, allowing physical USB testing. No trusted Windows code-signing identity is installed; compatibility with Smart App Control remains unverified until provider signing and dependency coverage are resolved.
 
 `windows/Publish.ps1` creates a self-contained development build. When given an existing trusted Windows code-signing certificate thumbprint and the Windows SDK SignTool path, it signs and verifies the executable. It does not change Windows security settings, install trust certificates, or obtain a signing service. A self-signed certificate is not a substitute for a provider trusted by Smart App Control. See [Microsoft's signing guidance](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control).
 
 ## Current limits
 
-- H.264 software encoding via FFmpeg/libx264; hardware encoding is not yet integrated. Maximum encoded size is 1920 wide / 1440 high, preserving aspect ratio. 30 or 60 fps is a target, not a guarantee.
+- The NVIDIA path captures the selected display on its owning GPU with Desktop Duplication and NVENC. It falls back to GDI capture with probed AMD encoding, then software encoding if necessary. Hardware output is bounded at 3840 × 2880; software output at 1920 × 1440, preserving aspect ratio. Oversized NVIDIA capture uses the compatible path. A silent capture process is restarted instead of leaving an indefinitely frozen connection.
+- 30 or 60 fps is a target, not a guarantee. The live counter measures encoded frames, including repeats of unchanged desktop content; it does not measure unique motion frames or iPad presentation rate. Extra FFmpeg frame duplication is disabled. See [capture validation](docs/capture-validation.md) for measured limits.
 - No audio, touch-to-mouse, Apple Pencil pressure, HDR, remote Internet desktop, keyboard sharing, or Duet-wide feature parity yet.
 - Driver installation and signing/provisioning are separate one-time prerequisites.
-- Physical cable-only playback, Wi-Fi playback, wake/reopen reconnect and visual arrow alignment require device testing.
+- USB playback is confirmed. Wi-Fi playback, cable-only isolation with Wi-Fi disabled, wake/reopen reconnect, portrait rotation, and the final size/arrow changes still need physical acceptance checks.
+
+For troubleshooting, `%LOCALAPPDATA%\OpenDisplay\runtime-status.json` holds one replaceable local snapshot of connection status, encoder, frame/byte counters, and measurement time. It contains no pairing key or desktop image and is never uploaded automatically.
 
 ## Protocol and dependencies
 

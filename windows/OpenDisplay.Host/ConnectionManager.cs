@@ -10,6 +10,8 @@ public sealed class ConnectionManager(Settings settings, DisplaySource source, b
     public event Action<DisplaySource, string>? Identify;
     public event Action<string>? DeviceConnected;
     public long BytesSent;
+    public long FramesEncoded;
+    public VideoEncoding Encoding { get; private set; }
     public long LastAutomaticModeChange;
     private SecureChannel? active;
     private string ipadEdge = "left";
@@ -19,6 +21,9 @@ public sealed class ConnectionManager(Settings settings, DisplaySource source, b
     public async Task RunAsync(CancellationToken ct)
     {
         string executable = VideoSender.FindFfmpeg(settings.FfmpegPath);
+        Status?.Invoke("Preparing screen capture");
+        var fallback = await VideoSender.SelectEncodingAsync(executable, ct);
+        bool desktopCaptureFailed = false;
         while (!ct.IsCancellationRequested)
         {
             try
@@ -43,9 +48,15 @@ public sealed class ConnectionManager(Settings settings, DisplaySource source, b
                     {
                         Interlocked.Exchange(ref LastAutomaticModeChange, Environment.TickCount64);
                         source = AutomaticDisplay.Fit(source, w, h, settings.Fps);
+                        // Retina iPads use two native pixels per interface point.
+                        // Keep full-resolution video while making desktop UI legible.
+                        DisplayScaling.FitVirtualDisplay(source, settings.IpadScalePercent);
                     }
                 }
-                var size = VideoSender.OutputSize(source.Bounds);
+                var output = GraphicsOutput.Find(source.DeviceName);
+                Encoding = !desktopCaptureFailed && output?.VendorId == 0x10de && VideoSender.OutputSize(source.Bounds, VideoEncoding.NvidiaDesktop) == source.Bounds.Size
+                    ? VideoEncoding.NvidiaDesktop : fallback;
+                var size = VideoSender.OutputSize(source.Bounds, Encoding);
                 var all = DisplaySource.GetAll();
                 neighbor = all.Where(d => d.DeviceName != source.DeviceName && !d.Virtual).OrderBy(d => Distance(d.Bounds, source.Bounds)).FirstOrDefault();
                 if (settings.Mirror || neighbor is null)
@@ -60,6 +71,7 @@ public sealed class ConnectionManager(Settings settings, DisplaySource source, b
                     await channel.SendAsync(1, JsonSerializer.SerializeToUtf8Bytes(new { name = Environment.MachineName, width = size.Width, height = size.Height, fps = settings.Fps, transport = link.Value.Transport, ipadEdge }), helloDeadline.Token);
                 }
                 Interlocked.Exchange(ref BytesSent, 0);
+                Interlocked.Exchange(ref FramesEncoded, 0);
                 Status?.Invoke($"Connected over {link.Value.Transport} · {size.Width} × {size.Height} · {settings.Fps} fps target");
                 await IdentifyAsync(session.Token);
                 long lastReply = Environment.TickCount64;
@@ -82,7 +94,7 @@ public sealed class ConnectionManager(Settings settings, DisplaySource source, b
                         await channel.SendAsync(4, BitConverter.GetBytes(Environment.TickCount64), deadline.Token);
                     }
                 }
-                var tasks = new[] { ReadLoop(), Heartbeat(), VideoSender.RunAsync(executable, source.Bounds, settings.Fps, channel, b => Interlocked.Add(ref BytesSent, b), session.Token) };
+                var tasks = new[] { ReadLoop(), Heartbeat(), VideoSender.RunAsync(executable, source.Bounds, settings.Fps, Encoding, output, channel, b => Interlocked.Add(ref BytesSent, b), f => Interlocked.Exchange(ref FramesEncoded, f), session.Token) };
                 var ended = await Task.WhenAny(tasks);
                 session.Cancel(); socket.Close();
                 try { await Task.WhenAll(tasks); } catch { }
@@ -91,7 +103,13 @@ public sealed class ConnectionManager(Settings settings, DisplaySource source, b
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { break; }
             catch (Exception e) when (e is IOException or SocketException or OperationCanceledException or System.Security.Cryptography.CryptographicException or JsonException)
             {
-                Status?.Invoke("Reconnecting · " + e.Message);
+                if (e is VideoCaptureException && Encoding != VideoEncoding.Software)
+                {
+                    if (Encoding == VideoEncoding.NvidiaDesktop) desktopCaptureFailed = true;
+                    else fallback = VideoEncoding.Software;
+                    Status?.Invoke("Retrying with compatible capture · " + e.Message);
+                }
+                else Status?.Invoke("Reconnecting · " + e.Message);
                 try { await Task.Delay(2500, ct); } catch (OperationCanceledException) { break; }
             }
             finally { active = null; }

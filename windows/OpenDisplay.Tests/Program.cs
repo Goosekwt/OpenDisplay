@@ -94,6 +94,11 @@ await Session(async (client, server, wire, ct) =>
 });
 
 var r = new DisplayRect(0, 0, 1920, 1080);
+Check(Geometry.ResizeAttached(new(-2420, 127, 2420, 1668), 1668, 2420, [new(0, 0, 2880, 1800)]) == new DisplayRect(-1668, 127, 1668, 2420), "rotating a left-side iPad keeps its shared edge attached");
+Check(Geometry.ResizeAttached(new(10, -1668, 2420, 1668), 1668, 2420, [r]) == new DisplayRect(10, -2420, 1668, 2420), "rotating an upper iPad keeps its bottom edge attached");
+Check(Geometry.ResizeAttached(new(1920, 40, 2420, 1668), 1668, 2420, [r]) == new DisplayRect(1920, 40, 1668, 2420), "right-side resize preserves the user's vertical offset");
+Check(Geometry.ResizeAttached(new(10, 1080, 2420, 1668), 1668, 2420, [r]) == new DisplayRect(10, 1080, 1668, 2420), "lower resize preserves its top edge");
+Check(Geometry.ResizeAttached(new(5000, 5000, 2420, 1668), 1668, 2420, [r]) == new DisplayRect(1920, 0, 1668, 2420), "a disconnected desktop is attached beside its neighbor");
 Check(Geometry.Edges(r, new(1920, 0, 1600, 1200)) == ("right", "left"), "right-side iPad has matching inward-neighbor edge arrows");
 Check(Geometry.Edges(r, new(-1600, 0, 1600, 1200)) == ("left", "right"), "left-side iPad arrows");
 Check(Geometry.Edges(r, new(0, -1200, 1600, 1200)) == ("top", "bottom"), "upper iPad arrows");
