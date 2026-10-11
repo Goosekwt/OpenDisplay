@@ -9,6 +9,7 @@
 - Direct capture produced roughly 46–48 encoded frames/second in short isolated tests without FFmpeg frame duplication. A live USB sample measured about 33–35 encoded frames/second at native resolution. Neither is a claim of 60 unique frames/second or iPad presentation rate.
 - The new Windows circular arrow completed its three-second native compositor check with 189 successful updates, no presentation errors, and disposed its window. Four directional artwork previews were inspected. Final user acceptance remains pending.
 - Windows publish and 25 core checks pass. Tests cover encrypted streams, rejection of malformed/replayed records, display mode selection, edge direction, and keeping left/top/right/bottom layouts attached through resizing.
+- Claude Code transferred a synthetic 2420 × 1668, 60-fps NVENC fixture to the owner's Mac mini and ran the receiver's parser, assembler, sample builder, pipeline, and VideoToolbox decoder against it. All 120 pictures parsed and decoded at the correct dimensions with zero decode errors and no pipeline drops. Fragmented chunks produced identical access units. This validates the stream format on that Mac; it is not a physical iPad frame-rate measurement.
 
 ## Remaining device checks
 
