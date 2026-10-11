@@ -60,7 +60,7 @@ Keep the working display clear. Pairing and connection state receive attention w
 - Clear connection state with optional settings disclosed separately.
 - Full-screen video with temporary, unobtrusive overlays.
 
-This source-derived snapshot was updated on 2026-10-11 for the Windows position arrow. The owner requested the iPad's circular appearance and smoother motion on Windows. Four Windows arrow artwork previews and a three-second native compositor check passed; final owner acceptance is pending. USB playback and the earlier position-arrow button are owner-confirmed. Native landscape resolution and virtual-display scaling are read back from Windows. The Windows build passes 25 core checks; the installed iPad build previously passed 63 simulator tests. Performance and remaining device checks are recorded in `docs/capture-validation.md`.
+This source-derived snapshot was updated on 2026-10-11 for the Windows position arrow. The owner requested the iPad's circular appearance and smoother motion on Windows. Four Windows arrow artwork previews and a three-second native compositor check passed. The owner confirmed that the final desktop/cursor size and updated position arrows look good on 2026-10-11. USB playback is also owner-confirmed. Native landscape resolution and virtual-display scaling are read back from Windows. The Windows build passes 25 core checks; the installed iPad build previously passed 63 simulator tests. Performance and remaining device checks are recorded in `docs/capture-validation.md`.
 
 ## Colors
 

@@ -74,7 +74,7 @@ Smart App Control initially blocked `OpenDisplay.Host.dll` as unsigned (Code Int
 - 30 or 60 fps is a target, not a guarantee. The live counter measures encoded frames, including repeats of unchanged desktop content; it does not measure unique motion frames or iPad presentation rate. Extra FFmpeg frame duplication is disabled. See [capture validation](docs/capture-validation.md) for measured limits.
 - No audio, touch-to-mouse, Apple Pencil pressure, HDR, remote Internet desktop, keyboard sharing, or Duet-wide feature parity yet.
 - Driver installation and signing/provisioning are separate one-time prerequisites.
-- USB playback is confirmed. Wi-Fi playback, cable-only isolation with Wi-Fi disabled, wake/reopen reconnect, portrait rotation, and the final size/arrow changes still need physical acceptance checks.
+- USB playback, native landscape desktop/cursor sizing, and the updated position arrows are owner-confirmed. Wi-Fi playback, cable-only isolation with Wi-Fi disabled, wake/reopen reconnect, and portrait rotation still need physical acceptance checks.
 
 For troubleshooting, `%LOCALAPPDATA%\OpenDisplay\runtime-status.json` holds one replaceable local snapshot of connection status, encoder, frame/byte counters, and measurement time. It contains no pairing key or desktop image and is never uploaded automatically.
 
