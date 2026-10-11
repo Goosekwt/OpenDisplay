@@ -106,6 +106,24 @@ Check(Geometry.Edges(r, new(0, 1080, 1600, 1200)) == ("bottom", "top"), "lower i
 Check(!Discovery.AdvertisesReceiver([1, 2]), "truncated discovery packet rejected");
 var cycle = new byte[30]; cycle[2] = 0x80; cycle[7] = 1; cycle[12] = 0xc0; cycle[13] = 12;
 Check(!Discovery.AdvertisesReceiver(cycle), "cyclic DNS compression rejected without hanging");
+RemoteInput? Input(string json) => RemoteInput.Parse(System.Text.Encoding.UTF8.GetBytes(json));
+Check(Input("{\"kind\":\"pointer\",\"x\":0,\"y\":1,\"phase\":\"down\",\"button\":0}") == new RemoteInput.Pointer(0, 1, "down", 0), "touch corner coordinates and button state decode exactly");
+Check(Input("{\"kind\":\"pointer\",\"x\":1.1,\"y\":0,\"phase\":\"move\",\"button\":0}") is null && Input("{\"kind\":\"pointer\",\"x\":0,\"y\":0,\"phase\":\"down\",\"button\":3}") is null, "out-of-screen touches and unknown buttons are rejected");
+Check(Input("{\"kind\":\"key\",\"code\":224,\"down\":true}") == new RemoteInput.Key(224, true) && Input("{\"kind\":\"key\",\"code\":999,\"down\":true}") is null && Input("{\"kind\":\"key\",\"code\":4,\"down\":1}") is null, "keyboard inputs require supported HID usages and boolean state");
+Check(Input("{\"kind\":\"wheel\",\"dx\":-120,\"dy\":120}") == new RemoteInput.Wheel(-120, 120) && Input("{\"kind\":\"wheel\",\"dx\":0,\"dy\":1201}") is null, "two-axis wheel inputs are bounded");
+Check(Input("{\"kind\":\"text\",\"text\":\"مرحبا 👋\"}") == new RemoteInput.Text("مرحبا 👋") && Input("{\"kind\":\"releaseAll\"}") is RemoteInput.ReleaseAll, "Unicode text and release-all events preserve their meaning");
+Check(Input("[]") is null && Input("{\"kind\":true}") is null && Input("{broken}") is null && RemoteInput.Parse(new byte[4097]) is null, "malformed and oversized input is rejected before injection");
+Check(HidKeyMap.VirtualKey(4) == 0x41 && HidKeyMap.VirtualKey(29) == 0x5A && HidKeyMap.VirtualKey(79) == 0x27 && HidKeyMap.VirtualKey(227) == 0x5B && HidKeyMap.VirtualKey(230) == 0xA5, "Magic Keyboard letters, arrows, Command and Option map to Windows keys");
+var tablet = new DisplayRect(-2420, 127, 2420, 1668);
+var desktop = new DisplayRect(-2420, 0, 5300, 1800);
+var corner = HidKeyMap.AbsolutePoint(0, 0, tablet, desktop);
+var opposite = HidKeyMap.AbsolutePoint(1, 1, tablet, desktop);
+Check(corner.X == 0 && corner.Y == 4626 && opposite.X == 29917 && opposite.Y == 65353, "absolute mouse coordinates include negative desktop origins and the iPad offset");
+Check(Geometry.FitWindow(new(-2500, 120, 2880, 1800), new(-2420, 127, 2420, 1570)) == new DisplayRect(-2420, 127, 2420, 1570), "oversized app windows fit the iPad work area without covering the taskbar");
+Check(Geometry.FitWindow(new(-2200, 200, 800, 600), new(-2420, 127, 2420, 1570)) == new DisplayRect(-2200, 200, 800, 600), "windows that fit retain their chosen size and position");
+const string ownedPath = @"\\?\ROOT#OPENDISPLAY#0000#{test}";
+Check(DisplayOwnership.Matches(@"ROOT\OPENDISPLAY\0000", ownedPath) && DisplayOwnership.Matches("ROOT\\OPENDISPLAY\\0000 (restart required)\r\n", ownedPath), "installer receipts match the exact owned adapter, including pending-restart receipts");
+Check(!DisplayOwnership.Matches(@"ROOT\OPENDISPLAY\000", ownedPath) && !DisplayOwnership.Matches(@"ROOT\OTHER\0000", ownedPath) && !DisplayOwnership.Matches(@"ROOT\OPENDISPLAY\0000 unexpected", ownedPath) && !DisplayOwnership.Matches("", ownedPath), "partial IDs, other adapters and malformed receipts cannot authorize display removal");
 Console.WriteLine($"{passed} checks passed.");
 
 sealed class RecordingStream(Stream inner, bool fragmented) : Stream

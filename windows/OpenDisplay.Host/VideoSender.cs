@@ -5,6 +5,13 @@ namespace OpenDisplay.Host;
 public enum VideoEncoding { Software, AmdHardware, NvidiaDesktop }
 public sealed class VideoCaptureException(string message) : IOException(message);
 
+public sealed class VideoTransferMetrics
+{
+    public long ReadTicks, SendTicks, Chunks;
+    public void Reset() { Interlocked.Exchange(ref ReadTicks, 0); Interlocked.Exchange(ref SendTicks, 0); Interlocked.Exchange(ref Chunks, 0); }
+    public object Snapshot() => new { readSeconds = Interlocked.Read(ref ReadTicks) / (double)Stopwatch.Frequency, sendSeconds = Interlocked.Read(ref SendTicks) / (double)Stopwatch.Frequency, chunks = Interlocked.Read(ref Chunks) };
+}
+
 public static class VideoSender
 {
     public static string FindFfmpeg(string configured)
@@ -66,7 +73,7 @@ public static class VideoSender
         foreach (var arg in new[] { "-flush_packets", "1", "-f", "h264", "pipe:1" }) psi.ArgumentList.Add(arg);
         return psi;
     }
-    public static async Task RunAsync(string executable, Rectangle rect, int fps, VideoEncoding encoding, GraphicsOutput? output, SecureChannel channel, Action<long> bytesSent, Action<long> framesEncoded, CancellationToken ct)
+    public static async Task RunAsync(string executable, Rectangle rect, int fps, VideoEncoding encoding, GraphicsOutput? output, SecureChannel channel, Action<long> bytesSent, Action<long> framesEncoded, CancellationToken ct, VideoTransferMetrics? metrics = null)
     {
         using var process = new Process { StartInfo = Arguments(executable, rect, fps, encoding, output), EnableRaisingEvents = true };
         string lastError = "";
@@ -84,15 +91,19 @@ public static class VideoSender
             while (true)
             {
                 int count;
+                long readStarted = Stopwatch.GetTimestamp();
                 using (var frameDeadline = CancellationTokenSource.CreateLinkedTokenSource(ct))
                 {
                     frameDeadline.CancelAfter(TimeSpan.FromSeconds(8));
                     try { count = await process.StandardOutput.BaseStream.ReadAsync(buffer, frameDeadline.Token); }
                     catch (OperationCanceledException) when (!ct.IsCancellationRequested) { throw new VideoCaptureException("Screen capture stopped producing video."); }
                 }
+                if (metrics is not null) Interlocked.Add(ref metrics.ReadTicks, Stopwatch.GetTimestamp() - readStarted);
                 if (count == 0) throw new VideoCaptureException("Screen capture ended. " + lastError);
                 using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct); deadline.CancelAfter(TimeSpan.FromSeconds(3));
+                long sendStarted = Stopwatch.GetTimestamp();
                 await channel.SendAsync(2, buffer.AsMemory(0, count), deadline.Token); bytesSent(count);
+                if (metrics is not null) { Interlocked.Add(ref metrics.SendTicks, Stopwatch.GetTimestamp() - sendStarted); Interlocked.Increment(ref metrics.Chunks); }
             }
         }
         finally { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { } }

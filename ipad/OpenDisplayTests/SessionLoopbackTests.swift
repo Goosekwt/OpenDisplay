@@ -163,6 +163,90 @@ final class SessionLoopbackTests: XCTestCase {
         XCTAssertTrue(waitUntil { self.log.contains("sessionEnded:stopped") && self.log.contains("stopped") }, "\(log)")
     }
 
+    // MARK: Input and receiver stats
+
+    private func connectHost(hello: String) throws -> TestClient {
+        let client = TestClient(port: port)
+        XCTAssertTrue(client.authenticate(key: Vectors.pairingKey))
+        _ = try XCTUnwrap(client.readRecord())
+        try client.sendRecord(.hello, Data(hello.utf8))
+        XCTAssertTrue(waitUntil { self.log.contains { $0.hasPrefix("hello:") } }, "\(log)")
+        return client
+    }
+
+    func testInputReachesAHostThatOptedIn() throws {
+        let client = try connectHost(hello: #"{"name":"PC","inputVersion":1}"#)
+        server.sendInput(.pointer(x: 0.5, y: 0.25, phase: .down, button: .left))
+        server.sendInput(.key(code: HIDUsage.a, down: true))
+        server.sendInput(.releaseAll)
+
+        var objects: [[String: Any]] = []
+        for _ in 0..<3 {
+            let record = try XCTUnwrap(client.readRecord())
+            XCTAssertEqual(record.type, RecordType.input.rawValue)
+            XCTAssertLessThanOrEqual(record.payload.count, InputEvent.maximumPayload)
+            objects.append(try XCTUnwrap(JSONSerialization.jsonObject(with: record.payload) as? [String: Any]))
+        }
+        XCTAssertEqual(objects.map { $0["kind"] as? String }, ["pointer", "key", "releaseAll"])
+        XCTAssertEqual(objects[0]["x"] as? Double, 0.5)
+        XCTAssertEqual(objects[0]["y"] as? Double, 0.25)
+        XCTAssertEqual(objects[0]["phase"] as? String, "down")
+        XCTAssertEqual(objects[1]["code"] as? Int, 4)
+        XCTAssertEqual(objects[1]["down"] as? Bool, true)
+    }
+
+    func testOldHostGetsNoInputAndAnOpaqueHeartbeatEcho() throws {
+        let client = try connectHost(hello: #"{"name":"PC","width":1600,"height":1000}"#)
+        server.sendInput(.key(code: HIDUsage.a, down: true))
+        server.sendInput(.pointer(x: 0.5, y: 0.5, phase: .move, button: .left))
+        try client.sendRecord(.heartbeat, Data([0xBE, 0xEF]))
+        let reply = try XCTUnwrap(client.readRecord())
+        XCTAssertEqual(reply.type, RecordType.heartbeat.rawValue, "input must not reach a host without inputVersion")
+        XCTAssertEqual(reply.payload, Data([0xBE, 0xEF]))
+    }
+
+    func testHeartbeatCarriesReceiverStatsWhenRequested() throws {
+        let encoded = try EncodedTestStream.make(width: 320, height: 240, frameCount: 4)
+        let client = try connectHost(hello: #"{"name":"PC","receiverStatsVersion":1}"#)
+        try client.sendRecord(.video, encoded.annexB + Data([0, 0, 0, 1, 0x09, 0xF0]))
+        XCTAssertTrue(waitUntil { self.log.contains("firstFrame") }, "\(log)")
+        XCTAssertTrue(waitUntil { self.log.contains("videoSize:320x240") }, "\(log)")
+
+        try client.sendRecord(.heartbeat, Data([1, 2, 3]))
+        let reply = try XCTUnwrap(client.readRecord())
+        XCTAssertEqual(reply.type, RecordType.heartbeat.rawValue)
+        let stats = try XCTUnwrap(JSONSerialization.jsonObject(with: reply.payload) as? [String: Int])
+        XCTAssertEqual(Set(stats.keys), ["enqueuedFrames", "droppedFrames"])
+        XCTAssertLessThanOrEqual((stats["enqueuedFrames"] ?? 0) + (stats["droppedFrames"] ?? 0), 4)
+        XCTAssertGreaterThan(stats["enqueuedFrames"] ?? 0, 0)
+    }
+
+    func testMoveFloodNeverDropsReleasesOrStallsHeartbeats() throws {
+        let client = try connectHost(hello: #"{"name":"PC","inputVersion":1}"#)
+        for i in 0..<5000 {
+            server.sendInput(.pointer(x: Double(i % 1000) / 1000, y: 0.5, phase: .move, button: .left))
+        }
+        server.sendInput(.pointer(x: 0.9, y: 0.5, phase: .up, button: .left))
+        server.sendInput(.key(code: HIDUsage.leftShift, down: false))
+        try client.sendRecord(.heartbeat, Data([7]))
+
+        var kinds: [String] = []
+        var sawHeartbeat = false
+        while !(kinds.contains("key") && sawHeartbeat) {
+            let record = try XCTUnwrap(client.readRecord(), "session stalled after \(kinds.count) input records")
+            if record.type == RecordType.heartbeat.rawValue {
+                XCTAssertEqual(record.payload, Data([7]))
+                sawHeartbeat = true
+                continue
+            }
+            let object = try XCTUnwrap(JSONSerialization.jsonObject(with: record.payload) as? [String: Any])
+            kinds.append(object["phase"] as? String ?? object["kind"] as? String ?? "?")
+        }
+        XCTAssertLessThanOrEqual(kinds.count, 5002)
+        XCTAssertEqual(Array(kinds.suffix(2)), ["up", "key"], "releases arrive last and in order")
+        XCTAssertFalse(log.contains { $0.hasPrefix("sessionEnded") }, "\(log)")
+    }
+
     // MARK: Helpers
 
     private func waitUntil(timeout: TimeInterval = 5, _ condition: () -> Bool) -> Bool {
@@ -182,6 +266,7 @@ final class SessionLoopbackTests: XCTestCase {
         case .hello(let hello): "hello:\(hello.ipadEdge ?? "none")"
         case .identify(let request): "identify:\(request.edge)"
         case .firstFrame: "firstFrame"
+        case .videoSize(let size): "videoSize:\(Int(size.width))x\(Int(size.height))"
         case .remoteError(let message): "remoteError:\(message)"
         case .sessionEnded(let reason): "sessionEnded:\(reason)"
         case .authenticationFailed: "authenticationFailed"

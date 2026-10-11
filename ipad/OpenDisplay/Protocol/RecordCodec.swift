@@ -6,7 +6,7 @@ enum RecordType: UInt8 {
     case video = 2
     case identify = 3
     case heartbeat = 4
-    case input = 5   // Reserved; v1 has no remote input.
+    case input = 5   // iPad → Windows input events, only to hosts whose hello has inputVersion 1.
     case error = 6
 }
 

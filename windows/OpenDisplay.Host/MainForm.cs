@@ -21,13 +21,18 @@ public sealed class MainForm : Form
     private readonly Label statistics = new() { AutoSize = true, ForeColor = Color.DimGray };
     private readonly Button start = new() { Text = "Start connecting", AutoSize = true, MinimumSize = new(160, 42) };
     private readonly Button identify = new() { Text = "Show position arrows", AutoSize = true, Enabled = false, MinimumSize = new(160, 42) };
+    private readonly Button useWifi = new() { Text = "Use Wi-Fi", AutoSize = true, Visible = false, MinimumSize = new(100, 42) };
+    private readonly SemaphoreSlim stopping = new(1);
+    private readonly Queue<object> recentConnectionEvents = new();
+    private string lastConnectionStatus = "";
     private readonly NotifyIcon tray;
     private readonly System.Windows.Forms.Timer timer = new() { Interval = 1000 };
+    private readonly WindowFitter windowFitter = new();
     private CancellationTokenSource? stop;
     private Task? running;
     private ConnectionManager? manager;
     private EdgeArrow? activeArrow;
-    private bool exiting, refreshing;
+    private bool exiting, refreshing, displayRefreshPending;
     private long lastBytes;
     private long lastFrames, lastSampleTime = Environment.TickCount64;
 
@@ -61,6 +66,9 @@ public sealed class MainForm : Form
         side.Items.AddRange(["right", "left", "top", "bottom"]); side.SelectedItem = settings.MirrorSide; if (side.SelectedIndex < 0) side.SelectedIndex = 0;
         var position = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true }; position.Controls.Add(new Label { Text = "iPad position (mirror test)", AutoSize = true, Padding = new(0, 6, 6, 0) }); position.Controls.Add(side); Row(position, 43);
         Row(new Label { Text = "Wi-Fi fallback", AutoSize = true, Font = new(Font, FontStyle.Bold) }, 30); Row(wifi, 42);
+        var wifiAfterUsb = new CheckBox { Text = "Keep connected over Wi-Fi when USB is unplugged", AutoSize = true, Checked = settings.ContinueOnWifiAfterUsb };
+        wifiAfterUsb.CheckedChanged += (_, _) => { settings.ContinueOnWifiAfterUsb = wifiAfterUsb.Checked; settings.Save(); };
+        Row(wifiAfterUsb, 35);
         frameRate.Items.AddRange([30, 60]); frameRate.SelectedItem = settings.Fps; if (frameRate.SelectedIndex < 0) frameRate.SelectedIndex = 0;
         var fps = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true }; fps.Controls.Add(new Label { Text = "Frame rate target", AutoSize = true, Padding = new(0, 6, 6, 0) }); fps.Controls.Add(frameRate); Row(fps, 46);
         var startup = new CheckBox { Text = "Open at Windows sign-in", AutoSize = true };
@@ -76,21 +84,23 @@ public sealed class MainForm : Form
         var copy = new Button { Text = "Copy pairing key", AutoSize = true, MinimumSize = new(170, 40), Margin = new(3, 14, 3, 12) }; copy.Click += (_, _) => CopyPairingKey(); pairing.Controls.Add(copy); pairing.Controls.Add(pairingFeedback);
         pairing.Controls.Add(new Label { Text = "Pair once, then leave this app running. Open OpenDisplay on your iPad to connect automatically.\n\nUSB is tried first. For Wi-Fi, keep both devices on the same local network.", MaximumSize = new(250, 0), AutoSize = true });
         pairing.Resize += (_, _) => { int width = Math.Max(200, pairing.ClientSize.Width - 40); foreach (var label in pairing.Controls.OfType<Label>()) label.MaximumSize = new(width, 0); foreach (var picture in pairing.Controls.OfType<PictureBox>()) picture.Size = new(Math.Min(width, (int)(248 * DeviceDpi / 96.0)), Math.Min(width, (int)(248 * DeviceDpi / 96.0))); };
-        var actions = new FlowLayoutPanel { Dock = DockStyle.Fill }; actions.Controls.Add(start); actions.Controls.Add(identify); root.Controls.Add(actions, 0, 2); root.SetColumnSpan(actions, 2);
+        var actions = new FlowLayoutPanel { Dock = DockStyle.Fill }; actions.Controls.Add(start); actions.Controls.Add(identify); actions.Controls.Add(useWifi); root.Controls.Add(actions, 0, 2); root.SetColumnSpan(actions, 2);
         tray = new NotifyIcon { Icon = AppIcon.Tray, Text = "OpenDisplay", Visible = true, ContextMenuStrip = new() };
-        tray.ContextMenuStrip.Items.Add("Open OpenDisplay", null, (_, _) => Restore()); tray.ContextMenuStrip.Items.Add("Quit", null, async (_, _) => { exiting = true; await StopAsync(); Close(); }); tray.DoubleClick += (_, _) => Restore();
+        tray.ContextMenuStrip.Items.Add("Open OpenDisplay", null, (_, _) => Restore()); tray.ContextMenuStrip.Items.Add("Quit", null, async (_, _) => { exiting = true; await StopAsync(false); Close(); }); tray.DoubleClick += (_, _) => Restore();
         start.Click += async (_, _) => { if (stop is null) await StartAsync(); else await StopAsync(); };
+        useWifi.Click += async (_, _) => { useWifi.Enabled = false; await StopAsync(false); await StartAsync(); useWifi.Enabled = true; };
         identify.Click += async (_, _) => { try { if (manager is not null) await manager.IdentifyAsync(stop?.Token ?? default); } catch (Exception e) { status.Text = e.Message; } };
         mirror.Checked = settings.Mirror; wifi.Text = settings.WifiAddress; side.Enabled = mirror.Checked;
         mirror.CheckedChanged += (_, _) => { side.Enabled = mirror.Checked && stop is null; RefreshDisplays(); };
         RefreshDisplays();
         timer.Tick += (_, _) =>
         {
+            windowFitter.SetTarget(settings.AutoFitWindows ? manager?.ConnectedDisplay : null);
             if (manager is null) return;
             long now = Environment.TickCount64, b = Interlocked.Read(ref manager.BytesSent), frames = Interlocked.Read(ref manager.FramesEncoded);
             double elapsed = (now - lastSampleTime) / 1000.0;
             if (elapsed < 2) return;
-            statistics.Text = b > 0 && b >= lastBytes && frames >= lastFrames
+            statistics.Text = manager?.ConnectedDisplay is not null && b > 0 && b >= lastBytes && frames >= lastFrames
                 ? $"{(frames - lastFrames) / elapsed:F1} fps encoded · {(b - lastBytes) * 8 / elapsed / 1_000_000.0:F1} Mbps sent" : "";
             lastBytes = b; lastFrames = frames; lastSampleTime = now;
             SaveRuntimeStatus();
@@ -98,7 +108,7 @@ public sealed class MainForm : Form
         SystemEvents.DisplaySettingsChanged += DisplaysChanged;
         Shown += async (_, _) => { if (settings.AutoConnect) await StartAsync(); if (Environment.GetCommandLineArgs().Contains("--tray")) Hide(); };
         FormClosing += (_, e) => { if (!exiting) { e.Cancel = true; Hide(); tray.ShowBalloonTip(1800, "OpenDisplay is still running", "Use the tray menu to reopen or quit.", ToolTipIcon.Info); } };
-        FormClosed += (_, _) => { SystemEvents.DisplaySettingsChanged -= DisplaysChanged; tray.Dispose(); timer.Dispose(); System.Security.Cryptography.CryptographicOperations.ZeroMemory(key); };
+        FormClosed += (_, _) => { SystemEvents.DisplaySettingsChanged -= DisplaysChanged; tray.Dispose(); timer.Dispose(); windowFitter.Dispose(); System.Security.Cryptography.CryptographicOperations.ZeroMemory(key); };
     }
     private void Restore() { Show(); WindowState = FormWindowState.Normal; Activate(); }
     private static LinkLabel Link(string text, EventHandler click) { var l = new LinkLabel { Text = text, AutoSize = true, Margin = new(0, 4, 18, 0), LinkColor = Color.FromArgb(20, 80, 170) }; l.Click += click; return l; }
@@ -108,9 +118,9 @@ public sealed class MainForm : Form
         if (refreshing || stop is not null) return; refreshing = true;
         string previous = (displays.SelectedItem as DisplaySource)?.DeviceName ?? settings.DisplayName;
         displays.Items.Clear();
-        var list = DisplaySource.GetAll().Where(d => mirror.Checked || d.Virtual).ToList();
+        var list = DisplaySource.GetAll(includeDisconnected: true).Where(d => (mirror.Checked && d.Active) || d.Virtual).ToList();
         displays.Items.AddRange(list.Cast<object>().ToArray());
-        displays.SelectedItem = list.FirstOrDefault(d => d.DeviceName == previous) ?? list.FirstOrDefault();
+        displays.SelectedItem = list.FirstOrDefault(d => d.DeviceName == previous) ?? list.FirstOrDefault(AutomaticDisplay.Owns) ?? list.FirstOrDefault();
         if (list.Count == 0) status.Text = "Set up the open-source extra display, choose Extend in Windows, then refresh. Mirror mode is available for a capture test.";
         else status.Text = "Ready · press Start connecting to wait for your iPad";
         refreshing = false;
@@ -118,8 +128,11 @@ public sealed class MainForm : Form
     private void DisplaysChanged(object? sender, EventArgs e)
     {
         if (IsDisposed || !IsHandleCreated) return;
+        if (Environment.TickCount64 - Interlocked.Read(ref AutomaticDisplay.LastTopologyChange) < 2500) return;
         if (manager is not null && Environment.TickCount64 - Interlocked.Read(ref manager.LastAutomaticModeChange) < 2500) return;
-        BeginInvoke(async () => { bool resume = stop is not null || settings.AutoConnect; if (stop is not null) await StopAsync(false); RefreshDisplays(); if (resume) await StartAsync(); });
+        if (displayRefreshPending) return;
+        displayRefreshPending = true;
+        BeginInvoke(async () => { try { bool resume = stop is not null || settings.AutoConnect; if (stop is not null) await StopAsync(false); RefreshDisplays(); if (resume) await StartAsync(); } finally { displayRefreshPending = false; } });
     }
     private async Task StartAsync()
     {
@@ -129,9 +142,27 @@ public sealed class MainForm : Form
         settings.DisplayName = source.DeviceName; settings.WifiAddress = wifi.Text.Trim(); settings.Mirror = mirror.Checked; settings.MirrorSide = side.Text; settings.Fps = (int)frameRate.SelectedItem!; settings.AutoConnect = true; settings.Save();
         stop = new(); manager = new(settings, source, key);
         lastBytes = lastFrames = 0; lastSampleTime = Environment.TickCount64;
-        manager.Status += text => UI(() => { status.Text = text; identify.Enabled = text.StartsWith("Connected"); SaveRuntimeStatus(); });
+        var connection = manager;
+        manager.Status += text => UI(() =>
+        {
+            if (manager != connection) return;
+            status.Text = text; identify.Enabled = text.StartsWith("Connected"); useWifi.Visible = connection.WaitingForUsb;
+            if (lastConnectionStatus != text)
+            {
+                lastConnectionStatus = text;
+                if (recentConnectionEvents.Count >= 12) recentConnectionEvents.Dequeue();
+                recentConnectionEvents.Enqueue(new { time = DateTimeOffset.UtcNow, status = text });
+            }
+            SaveRuntimeStatus();
+        });
         manager.Identify += (screen, edge) => UI(() => { activeArrow?.Close(); activeArrow = new EdgeArrow(screen.Bounds, edge); activeArrow.Show(); });
         manager.DeviceConnected += id => UI(() => { settings.LastDeviceId = id; settings.Save(); });
+        manager.TransportConnected += (transport, peer) => UI(() =>
+        {
+            if (manager != connection) return;
+            if (transport == "USB") settings.PreferredDevice = peer; else settings.LastWifiAddress = peer;
+            settings.Save();
+        });
         SetConnectingControls();
         var token = stop.Token;
         running = Task.Run(async () => { try { await manager.RunAsync(token); } catch (Exception e) { UI(async () => await ConnectionFailedAsync(e)); } });
@@ -144,7 +175,7 @@ public sealed class MainForm : Form
         try
         {
             // One local snapshot, with no pairing key, device ID or captured content.
-            var snapshot = new { updatedUtc = DateTimeOffset.UtcNow, processId = Environment.ProcessId, status = status.Text, statistics = statistics.Text, encoding = manager?.Encoding.ToString(), framesEncoded = manager is null ? 0 : Interlocked.Read(ref manager.FramesEncoded), bytesSent = manager is null ? 0 : Interlocked.Read(ref manager.BytesSent) };
+            var snapshot = new { updatedUtc = DateTimeOffset.UtcNow, processId = Environment.ProcessId, status = status.Text, statistics = statistics.Text, encoding = manager?.Encoding.ToString(), framesEncoded = manager is null ? 0 : Interlocked.Read(ref manager.FramesEncoded), bytesSent = manager is null ? 0 : Interlocked.Read(ref manager.BytesSent), transfer = manager?.TransferMetrics.Snapshot(), inputEvents = manager is null ? 0 : Interlocked.Read(ref manager.InputEvents), receiverFrames = manager is null ? -1 : Interlocked.Read(ref manager.ReceiverFrames), receiverDrops = manager is null ? -1 : Interlocked.Read(ref manager.ReceiverDrops), recentConnectionEvents = recentConnectionEvents.ToArray() };
             string path = Path.Combine(Settings.Folder, "runtime-status.json");
             File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(snapshot));
             File.Move(path + ".tmp", path, true);
@@ -187,11 +218,17 @@ public sealed class MainForm : Form
     }
     private async Task StopAsync(bool remember = true)
     {
+        await stopping.WaitAsync();
+        try
+        {
         if (stop is null) return; var cancellation = stop; cancellation.Cancel();
+        start.Enabled = false;
         activeArrow?.Close(); activeArrow = null;
-        if (running is not null) await running; cancellation.Dispose(); stop = null; manager = null; running = null;
+        if (running is not null) await running; cancellation.Dispose(); stop = null; manager = null; running = null; windowFitter.SetTarget(null);
         if (remember) { settings.AutoConnect = false; settings.Save(); }
-        displays.Enabled = wifi.Enabled = mirror.Enabled = frameRate.Enabled = true; side.Enabled = mirror.Checked; identify.Enabled = false; start.Text = "Start connecting"; status.Text = "Stopped"; statistics.Text = ""; RefreshDisplays();
+        displays.Enabled = wifi.Enabled = mirror.Enabled = frameRate.Enabled = true; side.Enabled = mirror.Checked; identify.Enabled = false; useWifi.Visible = false; start.Text = "Start connecting"; status.Text = "Stopped"; statistics.Text = ""; RefreshDisplays();
         SaveRuntimeStatus();
+        }
+        finally { start.Enabled = true; stopping.Release(); }
     }
 }

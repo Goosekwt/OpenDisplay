@@ -6,6 +6,7 @@ import SwiftUI
 let maximumControlMessageSize = 64 * 1024
 
 /// Type 1 from Windows: `{"name":"PC","width":1600,"height":1000,"fps":30,"transport":"USB","ipadEdge":"left"}`.
+/// Newer hosts add `"inputVersion":1` (accepts type 5 input) and `"receiverStatsVersion":1` (heartbeat stats).
 struct WindowsHello: Decodable, Equatable {
     var name: String?
     var width: Int?
@@ -13,6 +14,8 @@ struct WindowsHello: Decodable, Equatable {
     var fps: Double?
     var transport: String?
     var ipadEdge: String?
+    var inputVersion: Int?
+    var receiverStatsVersion: Int?
 
     static func decode(_ payload: Data) -> WindowsHello? {
         guard payload.count <= maximumControlMessageSize else { return nil }
@@ -21,6 +24,14 @@ struct WindowsHello: Decodable, Equatable {
 
     var connectionKind: ConnectionKind? { transport.flatMap(ConnectionKind.init(protocolValue:)) }
     var edge: ScreenEdge? { ipadEdge.flatMap(ScreenEdge.init(protocolValue:)) }
+    var acceptsInput: Bool { inputVersion == InputEvent.protocolVersion }
+    var wantsReceiverStats: Bool { receiverStatsVersion == ReceiverStats.protocolVersion }
+
+    /// The PC display size from the hello, a stand-in for the picture size until the first frame decodes.
+    var displaySize: CGSize? {
+        guard let width, let height, width > 0, height > 0 else { return nil }
+        return CGSize(width: width, height: height)
+    }
 }
 
 /// The video viewport in physical pixels, in its current orientation, bounded per the protocol.

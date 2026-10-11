@@ -26,12 +26,26 @@ Type 2: raw Annex B H.264 stream chunks (NOT necessarily whole NALs or frames). 
 
 Type 3: UTF8 JSON identify event: `{"edge":"left","seconds":3}`. Arrow sits at that edge and points outward toward the other display. Honor Reduce Motion. Windows shows the corresponding arrow on the neighboring physical display.
 
-Type 4: heartbeat opaque bytes echoed by iPad. Windows sends every 2 seconds. Missing reply for 8 seconds ends the session and triggers retry. Single serialized writer per direction.
+Type 4: heartbeat. Windows sends every 2 seconds. Without a `receiverStatsVersion:1` capability in the Windows hello, the iPad echoes the opaque payload. With that capability, it replies with UTF8 JSON `{"enqueuedFrames":123,"droppedFrames":0}`. These nonnegative counters reset per session and measure accepted samples and pipeline drops, not display scanout. The host accepts bounded replies (1024 bytes for optional statistics). Missing replies for 8 seconds end the session and trigger retry. Single serialized writer per direction.
 
-Type 5 reserved; no remote input in v1. Type 6: UTF8 JSON error with `message`; never include credentials.
+Type 5: optional remote input from iPad to Windows. The Windows hello must contain `inputVersion:1` before the iPad sends these records. Payloads are UTF8 JSON, at most 4096 bytes and JSON depth 4. Unknown or malformed events are ignored:
+
+| Kind | Fields | Meaning |
+| --- | --- | --- |
+| `pointer` | `x`, `y`, `phase`, `button` | Finite normalized coordinates in 0..1 within the displayed video; phase `move`, `down`, or `up`; button 0 left, 1 right, 2 middle. |
+| `wheel` | `dx`, `dy` | Integer Windows wheel units, each -1200..1200; +120 means one notch right/up. |
+| `key` | `code`, `down` | Supported USB HID keyboard usage and a Boolean key state. Command maps to Windows, Option to Alt. |
+| `text` | `text` | Committed Unicode text, 1..1024 UTF-16 units, no NUL. Physical keys use `key` without duplicate text. |
+| `releaseAll` | none | Release keys and buttons held by this session. |
+
+Input is enabled only during foreground streaming without a settings sheet. Coordinates refer to the complete decoded picture, aspect-fitted inside the receiver's full canvas without an added inset. The full app canvas determines negotiated resolution, independently of keyboard presentation. Initial touches outside the picture are ignored; an ongoing drag is clamped to its edges. The iPad coalesces pointer motion and bounds its pending queue to 128 events and 16 in-flight writes, preserving releases and room for heartbeat traffic. Losing focus or disconnecting releases held inputs. Windows injects events on its current interactive desktop; elevated applications may reject input from a normally running host. Input contents are never logged.
+
+Type 6: UTF8 JSON error with `message`; never include credentials.
 
 ## Lifecycle
 
 At most one authenticated session on the iPad. A new authenticated connection replaces the old one (an unauthenticated connection must NOT interrupt it). Returning to foreground restarts the listener and advertisement; backgrounding closes the session and stops capture on Windows. Reconnect retries use bounded backoff. Windows prefers USB, tries remembered/manual Wi-Fi and Bonjour as fallback. A stalled video send cancels the stream rather than accumulating an unbounded queue. The host stays running in the tray; start-at-login is opt-in.
 
-The first release does not claim audio, Apple Pencil pressure, remote touch, HDR, USB transport failover without interruption, or Duet-equivalent latency. These require separate work and measurement.
+After an established USB session, Wi-Fi discovery is suppressed until connecting is restarted unless `ContinueOnWifiAfterUsb` is enabled. This lets unplugging return the PC to its remaining displays. When no connection is available (or connecting stops), the host moves visible regular app windows to the primary screen and detaches only its installer-owned, independent secondary source. A later authenticated hello reactivates that source at the negotiated size; inactive sources remain discoverable by their actual adapter identity. Detach does not rewrite the saved display mode; activation persists only the owned adapter's connected mode. A brief reconnect grace period avoids unnecessary detach/attach during rotation.
+
+The current build does not claim audio, Apple Pencil pressure, HDR, USB transport failover without interruption, or Duet-equivalent latency. These require separate work and measurement. Hosts without input capabilities remain view-only.

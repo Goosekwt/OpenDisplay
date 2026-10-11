@@ -46,7 +46,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Connection")
                 } footer: {
-                    Text("The PC matches its display to this iPad's screen and reconnects after you rotate the iPad. This version shows your PC's screen over USB or Wi-Fi. It doesn't include audio, touch, keyboard or Apple Pencil input.")
+                    Text("The PC matches its display to this iPad's screen and reconnects after you rotate the iPad. When the PC supports it, touch, Apple Pencil, trackpad, mouse and keyboard control the PC; the iPad pointer hides over the picture because the PC draws its own. Audio isn't included.")
                 }
             }
             .navigationTitle("OpenDisplay")

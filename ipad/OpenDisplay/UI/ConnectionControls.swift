@@ -11,6 +11,14 @@ struct ConnectionControls: View {
                 .font(.subheadline.weight(.medium))
                 .lineLimit(1)
 
+            if model.acceptsInput {
+                Button(action: model.toggleSoftwareKeyboard) {
+                    Image(systemName: "keyboard")
+                        .font(.title3)
+                }
+                .accessibilityLabel("Show or hide the keyboard")
+            }
+
             Menu {
                 Button {
                     model.showLastArrowAgain()

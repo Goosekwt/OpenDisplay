@@ -24,6 +24,8 @@ final class VideoPipeline {
     private var formatSets: H264ParameterSets?
     private(set) var enqueuedFrames = 0
     private(set) var droppedFrames = 0
+    /// The decoded picture's display size, once a format is known. Input maps through its aspect-fit rectangle.
+    private(set) var presentationSize: CGSize?
 
     init(renderer: VideoFrameRenderer) {
         self.renderer = renderer
@@ -46,6 +48,7 @@ final class VideoPipeline {
         formatSets = nil
         enqueuedFrames = 0
         droppedFrames = 0
+        presentationSize = nil
         renderer.flushAndClear()
     }
 
@@ -70,6 +73,10 @@ final class VideoPipeline {
             if format == nil || formatSets != unit.parameterSets {
                 format = try H264SampleBuilder.formatDescription(for: unit.parameterSets)
                 formatSets = unit.parameterSets
+                if let format {
+                    presentationSize = CMVideoFormatDescriptionGetPresentationDimensions(
+                        format, usePixelAspectRatio: true, useCleanAperture: true)
+                }
             }
             guard let format else { return }
             renderer.enqueue(try H264SampleBuilder.sampleBuffer(for: unit, format: format))

@@ -2,6 +2,13 @@ namespace OpenDisplay.Core;
 public record DisplayRect(int X, int Y, int Width, int Height);
 public static class Geometry
 {
+    public static DisplayRect FitWindow(DisplayRect window, DisplayRect workArea)
+    {
+        if (workArea.Width <= 0 || workArea.Height <= 0) return window;
+        int width = Math.Min(window.Width, workArea.Width), height = Math.Min(window.Height, workArea.Height);
+        return new(Math.Clamp(window.X, workArea.X, workArea.X + workArea.Width - width),
+                   Math.Clamp(window.Y, workArea.Y, workArea.Y + workArea.Height - height), width, height);
+    }
     public static DisplayRect ResizeAttached(DisplayRect display, int width, int height, IReadOnlyList<DisplayRect> neighbors)
     {
         var resized = display with { Width = width, Height = height };

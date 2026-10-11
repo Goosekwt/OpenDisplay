@@ -8,12 +8,15 @@ public sealed class Settings
     internal bool Persist { get; set; } = true;
     public string DisplayName { get; set; } = "";
     public string WifiAddress { get; set; } = "";
+    public string LastWifiAddress { get; set; } = "";
     public string ProtectedKey { get; set; } = "";
     public bool AutoConnect { get; set; } = true;
     public bool Mirror { get; set; }
     public string MirrorSide { get; set; } = "right";
     public int Fps { get; set; } = 60;
     public int IpadScalePercent { get; set; } = 200;
+    public bool AutoFitWindows { get; set; } = true;
+    public bool ContinueOnWifiAfterUsb { get; set; }
     public string FfmpegPath { get; set; } = "";
     public string PreferredDevice { get; set; } = "";
     public string LastDeviceId { get; set; } = "";

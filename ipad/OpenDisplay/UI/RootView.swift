@@ -22,8 +22,13 @@ struct RootView: View {
                 .opacity(model.hasVideo ? 1 : 0)
                 .accessibilityHidden(!model.hasVideo)
 
-            if model.hasVideo {
-                // v1 sends no input to the PC, so a tap only reveals the connection controls.
+            if model.acceptsInput {
+                // Touch, trackpad and keyboard go to the PC; the controls live behind a small top-edge button.
+                RemoteInputSurface(view: model.remoteInput, isForwarding: isForwardingInput,
+                                   videoSize: model.videoContentSize)
+                    .ignoresSafeArea()
+            } else if model.hasVideo {
+                // This host accepts no input, so a tap only reveals the connection controls.
                 Color.clear
                     .contentShape(Rectangle())
                     .ignoresSafeArea()
@@ -46,6 +51,9 @@ struct RootView: View {
             if model.hasVideo && controlsVisible {
                 ConnectionControls(openSettings: { sheet = .settings })
                     .transition(.opacity)
+            } else if model.acceptsInput {
+                ControlsHandle(action: revealControls)
+                    .transition(.opacity)
             }
         }
         .statusBarHidden(model.hasVideo)
@@ -57,6 +65,10 @@ struct RootView: View {
         }
         .onChange(of: model.hasVideo) { _, hasVideo in
             if hasVideo { revealControls() } else { controlsVisible = false }
+        }
+        .onChange(of: controlsVisible) { _, visible in
+            // A control or its menu may have taken keyboard focus; the stream gets it back when they close.
+            if !visible { model.remoteInput.reclaimFocusIfNeeded() }
         }
         .task(id: controlsToken) {
             guard controlsVisible else { return }
@@ -87,8 +99,34 @@ struct RootView: View {
         }
     }
 
+    /// Input reaches the PC only while streaming in the foreground with no sheet over the video.
+    private var isForwardingInput: Bool {
+        model.acceptsInput && sheet == nil && scenePhase == .active
+    }
+
     private func revealControls() {
         controlsVisible = true
         controlsToken = UUID()
+    }
+}
+
+/// A small, always-available button at the top edge that reveals the connection controls
+/// without taking any of the screen away from remote input.
+private struct ControlsHandle: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "chevron.compact.down")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+                .frame(width: 56, height: 22)
+                .background(.black.opacity(0.35), in: Capsule())
+                .frame(width: 72, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Show connection controls")
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }

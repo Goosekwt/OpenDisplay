@@ -28,6 +28,8 @@ final class PeerConnection {
     var onAuthenticated: ((PeerConnection) -> Void)?
     var onRecord: ((PeerConnection, UInt8, Data) -> Void)?
     var onClose: ((PeerConnection, CloseReason) -> Void)?
+    /// A queued record was handed to the network stack, so there is room for another.
+    var onSendCompleted: ((PeerConnection) -> Void)?
 
     private let connection: NWConnection
     private let queue: DispatchQueue
@@ -37,7 +39,7 @@ final class PeerConnection {
     private var handshakeTimer: DispatchWorkItem?
     private var livenessTimer: DispatchSourceTimer?
     private var lastReceive = DispatchTime.now()
-    private var sendsInFlight = 0
+    private(set) var sendsInFlight = 0
     private var receivedClientHello = false
     private var closed = false
 
@@ -94,6 +96,7 @@ final class PeerConnection {
         onClose = nil
         onRecord = nil
         onAuthenticated = nil
+        onSendCompleted = nil
         handler?(self, reason)
     }
 
@@ -175,7 +178,11 @@ final class PeerConnection {
         connection.send(content: data, completion: .contentProcessed { [weak self] error in
             guard let self else { return }
             self.sendsInFlight -= 1
-            if let error { self.close(.networkError("\(error)")) }
+            if let error {
+                self.close(.networkError("\(error)"))
+            } else {
+                self.onSendCompleted?(self)
+            }
         })
     }
 

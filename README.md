@@ -2,7 +2,7 @@
 
 A personal, open-source Windows-to-iPad display project. USB first, Wi-Fi fallback, remembered pairing, and temporary position arrows on both screens. Independent implementation; not affiliated with Duet.
 
-**Development build.** USB desktop playback and position arrows have been confirmed on a physical iPad. The host passes 25 core checks, including automatic sizing and keeping adjacent displays attached through rotation. The installed iPad build previously passed 63 simulator tests. GPU capture is smoother in owner testing, but sustained 60 fps, Wi-Fi, and physical rotation/reopen acceptance are not yet verified. Windows builds remain unsigned; the owner manually disabled Smart App Control for personal development. The app does not change security settings.
+**Development build.** USB desktop playback, position arrows, edge-to-edge sizing and a single cursor have been confirmed on a physical iPad. The host passes 37 core checks, including remote-input validation, adapter ownership and automatic sizing. iPad build 6 passes 99 simulator tests, including keyboard-safe full-screen layout and pointer mapping. Native Windows checks verify display detach/reattach and returning normal and maximized windows to the main screen. GPU capture is smoother in owner testing, but sustained 60 fps, Wi-Fi, and physical rotation/reopen acceptance are not yet verified. Windows builds remain unsigned; the owner manually disabled Smart App Control for personal development. The app does not change security settings.
 
 ## Components
 
@@ -52,9 +52,19 @@ Mirror mode is an explicit capture test; it does not create extra desktop space.
 
 The iPad must remain foregrounded for display use. Reopening it should restart its receiver. A working Wi-Fi session currently keeps its transport until disconnect/reconnect; seamless mid-session handoff to a newly plugged cable is not claimed.
 
-The iPad reports its video viewport in pixels. The host chooses the closest supported virtual-display shape and size before capture; rotation reconnects with the updated size. It reads physical pixel coordinates independently of Windows scaling and keeps the shared screen edge attached during resizing. Native 2420 × 1668 landscape sizing is verified on the development iPad. Unusual window sizes may use the closest available mode.
+The iPad reports its full app canvas in pixels. The host chooses the closest supported virtual-display shape and size before capture; rotation reconnects with the updated size. It reads physical pixel coordinates independently of Windows scaling and keeps the shared screen edge attached during resizing. Native 2420 × 1668 landscape sizing is verified on the development iPad. Unusual window sizes may use the closest available mode. The complete desktop image preserves its proportions and fills the matching iPad canvas without an added inset. Touch and pointer coordinates use the same image rectangle. The physical display's rounded corners can cover the extreme image corners.
+
+When a USB session disconnects, the host returns visible app windows to the main screen and detaches its own extra display after a short reconnect grace period. It restores the display when the paired iPad reconnects. This is scoped to the exact adapter recorded by OpenDisplay's installer; primary displays, unrelated adapters and mirrored sources are not detached. Already-minimized windows remain minimized. Hung or elevated applications may reject window placement. The host does not immediately switch a disconnected USB session to Wi-Fi by default. To start a Wi-Fi session afterward, choose **Use Wi-Fi** on Windows, or enable **Keep connected over Wi-Fi when USB is unplugged** in Advanced options.
+
+The host remembers the last successfully paired USB device and tries it first. After a USB disconnect it checks again every 650 ms while waiting, without flashing between searching/waiting messages. Quitting the tray app preserves automatic connection for the next launch; **Stop connecting** deliberately pauses it. A temporary graphics-capture failure uses compatible capture, with the faster path eligible again after a 30-second cooldown on a later connection.
 
 The virtual iPad display defaults to 200% Windows scaling for readable Retina-size text and cursor, while keeping native-resolution video. `IpadScalePercent` in settings can override that default; `0` leaves scaling alone. Automatic scaling uses an undocumented Windows display-configuration interface, so it validates the response and skips the adjustment on unsupported systems. It never adjusts a physical/primary display or a cloned display source. Resolution and scaling are separate.
+
+With `AutoFitWindows` enabled (the default), ordinary resizable windows are fitted inside the connected iPad monitor's work area after a move or layout settles, including windows that aren't in the foreground. Pending work is bounded and debounced so windows aren't moved during a drag. Windows that already fit keep their position and size. Maximized windows follow Windows' own work-area rules; application minimum sizes may still prevent a fit. The app does not change wallpaper fitting or taskbar auto-hide preferences.
+
+## Control Windows from the iPad
+
+An input-capable host accepts taps to click, drags, touch-and-hold for right-click, two-finger scrolling, basic Pencil pointing, trackpad movement/buttons/scrolling, and Magic Keyboard key presses. Command maps to the Windows key and Option to Alt; iPadOS keeps its reserved system shortcuts. The native iPad pointer is hidden over the desktop image, which already contains Windows' cursor; native controls keep their own pointer. A small top-edge handle reveals connection controls and an on-screen keyboard button. Opening settings or leaving the app releases held keys and mouse buttons. Older hosts remain view-only. Elevated Windows applications may reject input from a normally running host. Physical device acceptance of every input gesture remains in progress.
 
 ## Windows signing
 
@@ -72,11 +82,11 @@ Smart App Control initially blocked `OpenDisplay.Host.dll` as unsigned (Code Int
 
 - The NVIDIA path captures the selected display on its owning GPU with Desktop Duplication and NVENC. It falls back to GDI capture with probed AMD encoding, then software encoding if necessary. Hardware output is bounded at 3840 × 2880; software output at 1920 × 1440, preserving aspect ratio. Oversized NVIDIA capture uses the compatible path. A silent capture process is restarted instead of leaving an indefinitely frozen connection.
 - 30 or 60 fps is a target, not a guarantee. The live counter measures encoded frames, including repeats of unchanged desktop content; it does not measure unique motion frames or iPad presentation rate. Extra FFmpeg frame duplication is disabled. See [capture validation](docs/capture-validation.md) for measured limits.
-- No audio, touch-to-mouse, Apple Pencil pressure, HDR, remote Internet desktop, keyboard sharing, or Duet-wide feature parity yet.
+- No audio, Apple Pencil pressure, HDR, remote Internet desktop, or Duet-wide feature parity yet.
 - Driver installation and signing/provisioning are separate one-time prerequisites.
 - USB playback, native landscape desktop/cursor sizing, and the updated position arrows are owner-confirmed. Wi-Fi playback, cable-only isolation with Wi-Fi disabled, wake/reopen reconnect, and portrait rotation still need physical acceptance checks.
 
-For troubleshooting, `%LOCALAPPDATA%\OpenDisplay\runtime-status.json` holds one replaceable local snapshot of connection status, encoder, frame/byte counters, and measurement time. It contains no pairing key or desktop image and is never uploaded automatically.
+For troubleshooting, `%LOCALAPPDATA%\OpenDisplay\runtime-status.json` holds one replaceable local snapshot of connection status, encoder, frame/byte counters, read/send timing, input-event count, receiver frame/drop counters, and measurement time. It contains no pairing key, desktop image or input content and is never uploaded automatically.
 
 ## Protocol and dependencies
 

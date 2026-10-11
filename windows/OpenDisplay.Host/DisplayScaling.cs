@@ -4,6 +4,14 @@ namespace OpenDisplay.Host;
 
 internal static class DisplayScaling
 {
+    internal static bool HasIndependentSource(string deviceName) => FindSource(deviceName) is not null;
+    internal static string? AdapterPath(string deviceName)
+    {
+        var source = FindSource(deviceName) ?? FindSource(deviceName, includeInactive: true);
+        if (source is null) return null;
+        var request = new AdapterName { Header = Header(4, (uint)Marshal.SizeOf<AdapterName>(), source.Value), Path = "" };
+        return GetDeviceInfo(ref request) == 0 ? request.Path : null;
+    }
     private static readonly int[] Percentages = [100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500];
 
     public static int? GetPercent(string deviceName)
@@ -49,12 +57,12 @@ internal static class DisplayScaling
     }
 
     private static DeviceHeader Header(int type, uint size, Source source) => new() { Type = type, Size = size, Adapter = source.Adapter, Id = source.Id };
-    private static Source? FindSource(string deviceName)
+    private static Source? FindSource(string deviceName, bool includeInactive = false)
     {
-        const uint activePaths = 2;
+        uint activePaths = includeInactive ? 1u : 2u;
         for (int attempt = 0; attempt < 3; attempt++)
         {
-            if (GetDisplayConfigBufferSizes(activePaths, out uint pathCount, out uint modeCount) != 0 || pathCount > 128 || modeCount > 1024) return null;
+            if (GetDisplayConfigBufferSizes(activePaths, out uint pathCount, out uint modeCount) != 0 || pathCount > (includeInactive ? 4096 : 128) || modeCount > (includeInactive ? 8192 : 1024)) return null;
             var paths = new DisplayPath[pathCount];
             var modes = new ModeInfo[modeCount];
             int result = QueryDisplayConfig(activePaths, ref pathCount, paths, ref modeCount, modes, 0);
@@ -64,7 +72,7 @@ internal static class DisplayScaling
             {
                 var name = new SourceName { Header = Header(1, 84, path.Source), Name = "" };
                 if (GetDeviceInfo(ref name) != 0 || name.Name != deviceName) continue;
-                if (paths.Take((int)pathCount).Count(p => p.Source.Adapter.Equals(path.Source.Adapter) && p.Source.Id == path.Source.Id) != 1) return null;
+                if (!includeInactive && paths.Take((int)pathCount).Count(p => p.Source.Adapter.Equals(path.Source.Adapter) && p.Source.Id == path.Source.Id) != 1) return null;
                 return path.Source;
             }
             return null;
@@ -90,10 +98,16 @@ internal static class DisplayScaling
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string Name;
     }
     [StructLayout(LayoutKind.Sequential)] private struct GetScale { public DeviceHeader Header; public int Minimum, Current, Maximum; }
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] private struct AdapterName
+    {
+        public DeviceHeader Header;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string Path;
+    }
     [StructLayout(LayoutKind.Sequential)] private struct SetScale { public DeviceHeader Header; public int Relative; }
     [DllImport("user32.dll")] private static extern int GetDisplayConfigBufferSizes(uint flags, out uint paths, out uint modes);
     [DllImport("user32.dll")] private static extern int QueryDisplayConfig(uint flags, ref uint paths, [Out] DisplayPath[] pathData, ref uint modes, [Out] ModeInfo[] modeData, nint topology);
     [DllImport("user32.dll", EntryPoint = "DisplayConfigGetDeviceInfo")] private static extern int GetDeviceInfo(ref SourceName request);
     [DllImport("user32.dll", EntryPoint = "DisplayConfigGetDeviceInfo")] private static extern int GetDeviceInfo(ref GetScale request);
+    [DllImport("user32.dll", EntryPoint = "DisplayConfigGetDeviceInfo")] private static extern int GetDeviceInfo(ref AdapterName request);
     [DllImport("user32.dll", EntryPoint = "DisplayConfigSetDeviceInfo")] private static extern int SetDeviceInfo(ref SetScale request);
 }

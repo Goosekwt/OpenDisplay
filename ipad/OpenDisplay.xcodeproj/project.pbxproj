@@ -13,7 +13,9 @@
 		07E48C3E2FABAE951F0AD012 /* VideoSurfaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892DD3B31754A6A3D4D34051 /* VideoSurfaceView.swift */; };
 		08105381D56D0E1DAF841949 /* Handshake.swift in Sources */ = {isa = PBXBuildFile; fileRef = 765923D3C79A95E35D2AE4D1 /* Handshake.swift */; };
 		17177D6DC58A623A4294B912 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 27091EAC454C9D922551109B /* Assets.xcassets */; };
+		1C8B574EA75C9489AC3716BA /* StreamLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C604E2D75D167930430D3E /* StreamLayoutTests.swift */; };
 		22ADDD20FE0A5B7AAB075B47 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB033C67FCBC65F9B55BD6F3 /* RootView.swift */; };
+		249D5B3417851C02869EEFA2 /* InputEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E189773550C726C6705AEA9 /* InputEvent.swift */; };
 		254EEAEE801943623316CF07 /* SessionLoopbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC5AEB61494163ED945C0092 /* SessionLoopbackTests.swift */; };
 		27569295F29D1808A1C79819 /* ScannerScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30C73CB5A4485B0FC258AD6 /* ScannerScreen.swift */; };
 		2A60589C5AD48393CC19C549 /* AnnexBParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F63F0FAAB35F9CCF21FCFA8 /* AnnexBParser.swift */; };
@@ -27,9 +29,13 @@
 		75B85ACAB520E61175C9182C /* VideoPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CFF11A2E13A018F449467C2 /* VideoPipeline.swift */; };
 		7ECE3E7A1D04957F9C242768 /* Messages.swift in Sources */ = {isa = PBXBuildFile; fileRef = D39FC4E0D977ECD9454C2876 /* Messages.swift */; };
 		818E7192BE6C18831C0B1D4A /* H264SampleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73384029FF026F4617AC8129 /* H264SampleBuilder.swift */; };
+		82DD39948ACD00E85286E3A4 /* InputOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14D7720386C887D02F0C83B /* InputOutbox.swift */; };
+		99B70BE68342D50BFD189037 /* RemoteInputControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD35774EE226F2E2E068971 /* RemoteInputControllerTests.swift */; };
+		9D3282F36DEA5F5E104896F8 /* VideoContentGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B074B6BE1404822818FA61C /* VideoContentGeometry.swift */; };
 		A009E46EFCF4D60441824E31 /* ManualKeyEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D38F253EF746076C217F7C /* ManualKeyEntryView.swift */; };
 		ADE35257DAB35443A0FE4B25 /* PairingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68840CB675729326063B17A3 /* PairingStore.swift */; };
 		B79DA642F965B6DE1FBCE387 /* CryptoVectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 481F124B768BD5BE742169CB /* CryptoVectorTests.swift */; };
+		BE56E75ED60F20BE56CDF6B4 /* InputProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F41B7A1F2E5C996F3B7D721 /* InputProtocolTests.swift */; };
 		BF8FC4FF1FDAECCAB7C97CCE /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3EDCA9DE78E11C43513C974 /* AppModel.swift */; };
 		C0E6E4C6357E3712535B7010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35DF6FF46F0CF6C56E62B1BE /* SettingsView.swift */; };
 		C1D20FF3F0746CBE9B231755 /* AccessUnitAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 385F797EB0330F31ADA72676 /* AccessUnitAssembler.swift */; };
@@ -37,7 +43,10 @@
 		DD628700073058A4A414850A /* EdgeArrowLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B673E03C77A7E7BDE160182F /* EdgeArrowLayer.swift */; };
 		DDB51D79114EB6FF851BA1D8 /* RecordCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF8C7C1A67A33FC05C110B02 /* RecordCodecTests.swift */; };
 		E9ED0E1D2F903797960D086F /* RecordCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC66B01038B7370C2A9D48FC /* RecordCodec.swift */; };
+		EF4449742B6FDE0051F3A226 /* RemoteInputController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0CD74CDB1640AAE0D854E64 /* RemoteInputController.swift */; };
+		F3E7943809F55D7F4F649A46 /* RemoteInputViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40ABC993A4F58256E05503AA /* RemoteInputViewTests.swift */; };
 		F77902C63D5183BFB73F538E /* H264PipelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E5D80C02E5F1808ECD0464 /* H264PipelineTests.swift */; };
+		F7B48ACC987BCD7E86D901F9 /* RemoteInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7502F048EDA0C433A7C3A121 /* RemoteInputView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,17 +64,23 @@
 		1F63F0FAAB35F9CCF21FCFA8 /* AnnexBParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnexBParser.swift; sourceTree = "<group>"; };
 		27091EAC454C9D922551109B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2965EF5D26F8B047EC219E1C /* Base64URL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Base64URL.swift; sourceTree = "<group>"; };
+		2DD35774EE226F2E2E068971 /* RemoteInputControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteInputControllerTests.swift; sourceTree = "<group>"; };
 		35DF6FF46F0CF6C56E62B1BE /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		385F797EB0330F31ADA72676 /* AccessUnitAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessUnitAssembler.swift; sourceTree = "<group>"; };
+		3E189773550C726C6705AEA9 /* InputEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputEvent.swift; sourceTree = "<group>"; };
+		40ABC993A4F58256E05503AA /* RemoteInputViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteInputViewTests.swift; sourceTree = "<group>"; };
 		481F124B768BD5BE742169CB /* CryptoVectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoVectorTests.swift; sourceTree = "<group>"; };
 		48AB3D2C76EBAE63BAFE9820 /* ConnectionControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionControls.swift; sourceTree = "<group>"; };
+		4B074B6BE1404822818FA61C /* VideoContentGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoContentGeometry.swift; sourceTree = "<group>"; };
 		4B2B0387F6D872783372DD84 /* StatusPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPanel.swift; sourceTree = "<group>"; };
 		63E5D80C02E5F1808ECD0464 /* H264PipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264PipelineTests.swift; sourceTree = "<group>"; };
 		68840CB675729326063B17A3 /* PairingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingStore.swift; sourceTree = "<group>"; };
 		6907A2B26628B18D11D56C67 /* OpenDisplayTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OpenDisplayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B910E2A8F95FDE3C17E8240 /* PairingCodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingCodeTests.swift; sourceTree = "<group>"; };
 		6CFF11A2E13A018F449467C2 /* VideoPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPipeline.swift; sourceTree = "<group>"; };
+		6F41B7A1F2E5C996F3B7D721 /* InputProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputProtocolTests.swift; sourceTree = "<group>"; };
 		73384029FF026F4617AC8129 /* H264SampleBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264SampleBuilder.swift; sourceTree = "<group>"; };
+		7502F048EDA0C433A7C3A121 /* RemoteInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteInputView.swift; sourceTree = "<group>"; };
 		765923D3C79A95E35D2AE4D1 /* Handshake.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Handshake.swift; sourceTree = "<group>"; };
 		892DD3B31754A6A3D4D34051 /* VideoSurfaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoSurfaceView.swift; sourceTree = "<group>"; };
 		9477281C0029DCE3414D9F4D /* OpenDisplayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDisplayApp.swift; sourceTree = "<group>"; };
@@ -76,13 +91,16 @@
 		B673E03C77A7E7BDE160182F /* EdgeArrowLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeArrowLayer.swift; sourceTree = "<group>"; };
 		BD146E5CC3137BCAF70AD8DF /* AnnexBParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnexBParserTests.swift; sourceTree = "<group>"; };
 		BF8C7C1A67A33FC05C110B02 /* RecordCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCodecTests.swift; sourceTree = "<group>"; };
+		D0CD74CDB1640AAE0D854E64 /* RemoteInputController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteInputController.swift; sourceTree = "<group>"; };
 		D39FC4E0D977ECD9454C2876 /* Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages.swift; sourceTree = "<group>"; };
 		D3D38F253EF746076C217F7C /* ManualKeyEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualKeyEntryView.swift; sourceTree = "<group>"; };
 		D3E15899331E031A7192A00C /* PairingCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingCode.swift; sourceTree = "<group>"; };
+		E1C604E2D75D167930430D3E /* StreamLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamLayoutTests.swift; sourceTree = "<group>"; };
 		E3EDCA9DE78E11C43513C974 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		E5E79D8629D390C59205A04C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EB033C67FCBC65F9B55BD6F3 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		EFF10D559723A3C352AA757A /* OpenDisplay.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenDisplay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F14D7720386C887D02F0C83B /* InputOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputOutbox.swift; sourceTree = "<group>"; };
 		FC5AEB61494163ED945C0092 /* SessionLoopbackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLoopbackTests.swift; sourceTree = "<group>"; };
 		FC66B01038B7370C2A9D48FC /* RecordCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCodec.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -95,6 +113,17 @@
 				953FB46B5FF5224014F7C831 /* PeerConnection.swift */,
 			);
 			path = Network;
+			sourceTree = "<group>";
+		};
+		404A1344FB937B02970694F1 /* Input */ = {
+			isa = PBXGroup;
+			children = (
+				F14D7720386C887D02F0C83B /* InputOutbox.swift */,
+				D0CD74CDB1640AAE0D854E64 /* RemoteInputController.swift */,
+				7502F048EDA0C433A7C3A121 /* RemoteInputView.swift */,
+				4B074B6BE1404822818FA61C /* VideoContentGeometry.swift */,
+			);
+			path = Input;
 			sourceTree = "<group>";
 		};
 		4AE379BB421C49BFAE49E769 /* UI */ = {
@@ -156,6 +185,7 @@
 				27091EAC454C9D922551109B /* Assets.xcassets */,
 				E5E79D8629D390C59205A04C /* Info.plist */,
 				A4AA5FCBDF55051854837B0F /* App */,
+				404A1344FB937B02970694F1 /* Input */,
 				00D58DD934F874839551F6C8 /* Network */,
 				FF9580119F7CFC735C31C3B0 /* Protocol */,
 				F0E5E2AA577A31DD52660A5A /* Storage */,
@@ -172,9 +202,13 @@
 				481F124B768BD5BE742169CB /* CryptoVectorTests.swift */,
 				AEE7E9813C0E8D00612DE676 /* EdgeArrowTests.swift */,
 				63E5D80C02E5F1808ECD0464 /* H264PipelineTests.swift */,
+				6F41B7A1F2E5C996F3B7D721 /* InputProtocolTests.swift */,
 				6B910E2A8F95FDE3C17E8240 /* PairingCodeTests.swift */,
 				BF8C7C1A67A33FC05C110B02 /* RecordCodecTests.swift */,
+				2DD35774EE226F2E2E068971 /* RemoteInputControllerTests.swift */,
+				40ABC993A4F58256E05503AA /* RemoteInputViewTests.swift */,
 				FC5AEB61494163ED945C0092 /* SessionLoopbackTests.swift */,
+				E1C604E2D75D167930430D3E /* StreamLayoutTests.swift */,
 				15E9C558B1309FE201035D14 /* TestSupport.swift */,
 			);
 			path = OpenDisplayTests;
@@ -193,6 +227,7 @@
 			children = (
 				2965EF5D26F8B047EC219E1C /* Base64URL.swift */,
 				765923D3C79A95E35D2AE4D1 /* Handshake.swift */,
+				3E189773550C726C6705AEA9 /* InputEvent.swift */,
 				D39FC4E0D977ECD9454C2876 /* Messages.swift */,
 				D3E15899331E031A7192A00C /* PairingCode.swift */,
 				FC66B01038B7370C2A9D48FC /* RecordCodec.swift */,
@@ -295,6 +330,8 @@
 				DD628700073058A4A414850A /* EdgeArrowLayer.swift in Sources */,
 				818E7192BE6C18831C0B1D4A /* H264SampleBuilder.swift in Sources */,
 				08105381D56D0E1DAF841949 /* Handshake.swift in Sources */,
+				249D5B3417851C02869EEFA2 /* InputEvent.swift in Sources */,
+				82DD39948ACD00E85286E3A4 /* InputOutbox.swift in Sources */,
 				A009E46EFCF4D60441824E31 /* ManualKeyEntryView.swift in Sources */,
 				7ECE3E7A1D04957F9C242768 /* Messages.swift in Sources */,
 				74F6F0CC3FD88E64992F1140 /* OpenDisplayApp.swift in Sources */,
@@ -302,10 +339,13 @@
 				ADE35257DAB35443A0FE4B25 /* PairingStore.swift in Sources */,
 				05C6FF4AE49099A92A6D50A0 /* PeerConnection.swift in Sources */,
 				E9ED0E1D2F903797960D086F /* RecordCodec.swift in Sources */,
+				EF4449742B6FDE0051F3A226 /* RemoteInputController.swift in Sources */,
+				F7B48ACC987BCD7E86D901F9 /* RemoteInputView.swift in Sources */,
 				22ADDD20FE0A5B7AAB075B47 /* RootView.swift in Sources */,
 				27569295F29D1808A1C79819 /* ScannerScreen.swift in Sources */,
 				C0E6E4C6357E3712535B7010 /* SettingsView.swift in Sources */,
 				5F0F2B35C41153D2D139FF3E /* StatusPanel.swift in Sources */,
+				9D3282F36DEA5F5E104896F8 /* VideoContentGeometry.swift in Sources */,
 				75B85ACAB520E61175C9182C /* VideoPipeline.swift in Sources */,
 				07E48C3E2FABAE951F0AD012 /* VideoSurfaceView.swift in Sources */,
 			);
@@ -319,9 +359,13 @@
 				B79DA642F965B6DE1FBCE387 /* CryptoVectorTests.swift in Sources */,
 				31D5ED389EB53BB0816CAB45 /* EdgeArrowTests.swift in Sources */,
 				F77902C63D5183BFB73F538E /* H264PipelineTests.swift in Sources */,
+				BE56E75ED60F20BE56CDF6B4 /* InputProtocolTests.swift in Sources */,
 				456F0BEC3F1D56192CCDE7B6 /* PairingCodeTests.swift in Sources */,
 				DDB51D79114EB6FF851BA1D8 /* RecordCodecTests.swift in Sources */,
+				99B70BE68342D50BFD189037 /* RemoteInputControllerTests.swift in Sources */,
+				F3E7943809F55D7F4F649A46 /* RemoteInputViewTests.swift in Sources */,
 				254EEAEE801943623316CF07 /* SessionLoopbackTests.swift in Sources */,
+				1C8B574EA75C9489AC3716BA /* StreamLayoutTests.swift in Sources */,
 				5BC22C4FE3C8574995B7E6B9 /* TestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -413,7 +457,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -507,7 +551,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;

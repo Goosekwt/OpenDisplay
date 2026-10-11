@@ -4,20 +4,27 @@ namespace OpenDisplay.Host;
 
 public sealed record DisplaySource(string DeviceName, string Label, Rectangle Bounds, bool Primary, bool Virtual)
 {
+    public bool Active { get; init; } = true;
+    public string AdapterId { get; init; } = "";
     public override string ToString() => $"{Label} · {Bounds.Width} × {Bounds.Height}{(Primary ? " · primary" : "")}";
     public DisplayRect Rect => new(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height);
-    public static List<DisplaySource> GetAll() => Screen.AllScreens.Select(s =>
+    public static List<DisplaySource> GetAll(bool includeDisconnected = false)
     {
-        string label = s.DeviceName;
+        var result = new List<DisplaySource>();
         for (uint i = 0; i < 32; i++)
         {
             var d = new DisplayDevice { Size = Marshal.SizeOf<DisplayDevice>() };
             if (!EnumDisplayDevices(null, i, ref d, 0)) break;
-            if (d.Name == s.DeviceName) { label = d.Description + " (" + s.DeviceName.Replace("\\\\.\\", "") + ")"; break; }
+            bool active = (d.State & 1) != 0, primary = (d.State & 4) != 0;
+            bool virtualDisplay = d.Description.Contains("Virtual Display", StringComparison.OrdinalIgnoreCase) || d.Description.Contains("IddSample", StringComparison.OrdinalIgnoreCase);
+            if (!active && !(includeDisconnected && virtualDisplay)) continue;
+            Rectangle bounds;
+            try { bounds = active ? AutomaticDisplay.GetCurrentBounds(d.Name) : AutomaticDisplay.GetSavedBounds(d.Name); }
+            catch (IOException) { continue; } // A monitor can disappear during enumeration.
+            result.Add(new(d.Name, d.Description + " (" + d.Name.Replace("\\\\.\\", "") + ")", bounds, primary, virtualDisplay) { Active = active, AdapterId = virtualDisplay ? DisplayScaling.AdapterPath(d.Name) ?? "" : d.Id });
         }
-        bool virtualDisplay = label.Contains("Virtual Display", StringComparison.OrdinalIgnoreCase) || label.Contains("IddSample", StringComparison.OrdinalIgnoreCase);
-        return new DisplaySource(s.DeviceName, label, AutomaticDisplay.GetCurrentBounds(s.DeviceName), s.Primary, virtualDisplay);
-    }).ToList();
+        return result;
+    }
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] private struct DisplayDevice
     {
         public int Size;

@@ -27,8 +27,11 @@ final class AppModel {
     private(set) var lastEdge: ScreenEdge?
     /// The video viewport in pixels. Sent to the PC so it sizes the display automatically.
     private(set) var displaySize: PixelSize?
+    /// The decoded picture's size, for mapping touches through the aspect-fit rectangle.
+    private(set) var decodedVideoSize: CGSize?
 
     let surface = VideoSurfaceView(frame: .zero)
+    let remoteInput = RemoteInputView()
 
     @ObservationIgnored private var server: DisplayServer!
     @ObservationIgnored private let store = PairingStore()
@@ -40,6 +43,8 @@ final class AppModel {
         server = DisplayServer(renderer: surface.displayLayer.sampleBufferRenderer) { [weak self] event in
             MainActor.assumeIsolated { self?.handle(event) }
         }
+        let server = self.server!
+        remoteInput.controller.send = { server.sendInput($0) }
         surface.onPixelSizeChange = { [weak self] size in
             MainActor.assumeIsolated { self?.viewportChanged(to: size) }
         }
@@ -65,6 +70,11 @@ final class AppModel {
     }
 
     var connectionKind: ConnectionKind? { hello?.connectionKind }
+
+    /// Streaming to a host that accepts touch, trackpad and keyboard input. Older hosts are view-only.
+    var acceptsInput: Bool { hasVideo && hello?.acceptsInput == true }
+
+    var videoContentSize: CGSize? { decodedVideoSize ?? hello?.displaySize }
 
     var connectionSummary: String {
         var parts = [displayPCName]
@@ -143,6 +153,10 @@ final class AppModel {
         startListeningIfPossible()
     }
 
+    func toggleSoftwareKeyboard() {
+        remoteInput.toggleSoftwareKeyboard()
+    }
+
     func showLastArrowAgain() {
         guard let lastEdge else { return }
         showArrow(EdgeArrowRequest(edge: lastEdge, duration: IdentifyRequest.defaultSeconds))
@@ -191,7 +205,8 @@ final class AppModel {
         server.updateDisplaySize(size)
     }
 
-    private func handle(_ event: ServerEvent) {
+    /// Internal so layout tests can drive a streaming session without a PC.
+    func handle(_ event: ServerEvent) {
         switch event {
         case .listener(let status):
             listenerStatus = status
@@ -199,6 +214,7 @@ final class AppModel {
             isConnected = true
             hasVideo = false
             hello = nil
+            decodedVideoSize = nil
             notice = nil
             UIApplication.shared.isIdleTimerDisabled = true
         case .hello(let hello):
@@ -208,12 +224,15 @@ final class AppModel {
             if let arrowRequest = EdgeArrowRequest.forIdentify(request) { showArrow(arrowRequest) }
         case .firstFrame:
             hasVideo = true
+        case .videoSize(let size):
+            decodedVideoSize = size
         case .remoteError(let message):
             notice = message
         case .sessionEnded(let reason):
             isConnected = false
             hasVideo = false
             hello = nil
+            decodedVideoSize = nil
             UIApplication.shared.isIdleTimerDisabled = false
             if let text = Self.noticeText(for: reason) { notice = text }
         case .authenticationFailed:

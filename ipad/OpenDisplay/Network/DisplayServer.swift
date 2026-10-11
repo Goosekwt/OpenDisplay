@@ -17,6 +17,8 @@ enum ServerEvent {
     case hello(WindowsHello)
     case identify(IdentifyRequest)
     case firstFrame
+    /// The decoded picture size changed (or became known).
+    case videoSize(CGSize)
     case remoteError(String)
     case sessionEnded(PeerConnection.CloseReason)
     /// An OpenDisplay PC tried to connect with a different pairing key. The current session, if any, is untouched.
@@ -30,6 +32,8 @@ final class DisplayServer {
     static let serviceType = "_opendisplay._tcp"
     static let maximumPendingConnections = 4
     static let maximumHeartbeatPayload = 4096
+    /// Input never uses more than half of PeerConnection's send window, so heartbeat replies always fit.
+    static let maximumInputSendsInFlight = PeerConnection.maximumSendsInFlight / 2
 
     struct Identity {
         var name: String
@@ -60,6 +64,10 @@ final class DisplayServer {
     private var wantsListening = false
     private var restartWork: DispatchWorkItem?
     private var restartAttempt = 0
+    private var activeAcceptsInput = false
+    private var activeWantsStats = false
+    private var inputOutbox = InputOutbox()
+    private var reportedVideoSize: CGSize?
 
     /// `events` is called on the main queue.
     init(port: UInt16 = defaultPort, advertise: Bool = true, renderer: AVSampleBufferVideoRenderer,
@@ -113,6 +121,16 @@ final class DisplayServer {
             pairingKey = nil
             keyFingerprint = nil
             emit(.listener(.stopped))
+        }
+    }
+
+    /// Queues one input event for the current session. Dropped unless that host's hello opted in to input.
+    /// Callable from any thread; sealing and sending stay on the session queue.
+    func sendInput(_ event: InputEvent) {
+        queue.async { [self] in
+            guard active != nil, activeAcceptsInput else { return }
+            inputOutbox.append(event)
+            drainInput()
         }
     }
 
@@ -206,7 +224,8 @@ final class DisplayServer {
         pending[peer.id] = nil
         active?.close(.replaced)
         active = peer
-        video.reset()
+        resetSessionState()
+        peer.onSendCompleted = { [weak self] in if $0 === self?.active { self?.drainInput() } }
         Self.log.info("Session started from \(peer.endpointDescription, privacy: .public)")
         emit(.sessionStarted)
         peer.send(.hello, identity.hello.encoded())
@@ -216,7 +235,7 @@ final class DisplayServer {
         pending[peer.id] = nil
         if peer === active {
             active = nil
-            video.reset()
+            resetSessionState()
             Self.log.info("Session ended: \(String(describing: reason), privacy: .public)")
             emit(.sessionEnded(reason))
         } else if reason == .authenticationFailed {
@@ -236,9 +255,18 @@ final class DisplayServer {
         guard peer === active else { return }
         switch RecordType(rawValue: type) {
         case .hello:
-            if let hello = WindowsHello.decode(payload) { emit(.hello(hello)) }
+            if let hello = WindowsHello.decode(payload) {
+                activeAcceptsInput = hello.acceptsInput
+                activeWantsStats = hello.wantsReceiverStats
+                if !activeAcceptsInput { inputOutbox.removeAll() }
+                emit(.hello(hello))
+            }
         case .video:
             if video.consume(payload) { emit(.firstFrame) }
+            if let size = video.presentationSize, size != reportedVideoSize {
+                reportedVideoSize = size
+                emit(.videoSize(size))
+            }
         case .identify:
             if let request = IdentifyRequest.decode(payload) { emit(.identify(request)) }
         case .heartbeat:
@@ -246,12 +274,37 @@ final class DisplayServer {
                 peer.close(.protocolViolation("heartbeat too large"))
                 return
             }
-            peer.send(.heartbeat, payload)
+            if activeWantsStats {
+                peer.send(.heartbeat, ReceiverStats(enqueuedFrames: video.enqueuedFrames,
+                                                    droppedFrames: video.droppedFrames).encoded())
+            } else {
+                peer.send(.heartbeat, payload)
+            }
         case .error:
             if let message = RemoteErrorMessage.displayText(from: payload) { emit(.remoteError(message)) }
         case .input, .none:
-            break  // Reserved in v1, or a type from a newer host: ignored.
+            break  // Input only flows iPad → Windows; unknown types from a newer host are ignored.
         }
+    }
+
+    /// Sends queued input while the connection has room; the rest waits (and coalesces) in the outbox.
+    private func drainInput() {
+        guard let active, activeAcceptsInput else {
+            inputOutbox.removeAll()
+            return
+        }
+        while active.sendsInFlight < Self.maximumInputSendsInFlight, let event = inputOutbox.popFirst() {
+            guard let payload = event.encoded() else { continue }
+            active.send(.input, payload)
+        }
+    }
+
+    private func resetSessionState() {
+        video.reset()
+        activeAcceptsInput = false
+        activeWantsStats = false
+        inputOutbox.removeAll()
+        reportedVideoSize = nil
     }
 
     private func emit(_ event: ServerEvent) {
